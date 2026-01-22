@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.6.8</title>
+    <title>GaBonzoTan v.1.7.2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -63,6 +63,9 @@
         select, input, textarea { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
         textarea { resize: vertical; min-height: 60px; font-family: inherit; }
         
+        #easter-egg-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 10000; cursor: pointer; }
+        #easter-egg-overlay img { max-width: 90%; max-height: 80%; border: 2px solid var(--accent-gold); box-shadow: 0 0 20px var(--accent-gold); border-radius: 10px; }
+
         .changelog-container { max-height: 480px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; scrollbar-width: thin; scrollbar-color: var(--ai-purple) #111; }
         .changelog-entry { margin-bottom: 25px; padding-left: 10px; border-left: 2px solid #333; }
         .changelog-ver { color: var(--accent-gold); font-weight: bold; font-size: 14px; margin-bottom: 5px; }
@@ -82,16 +85,16 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.6.8</div>
+        <div class="version-tag">STABLE RELEASE v.1.7.2</div>
     </div>
 
     <div id="app-content">
         <div style="display:flex; justify-content: space-between; align-items: center;">
-            <div id="active-user-tag" style="font-size: 10px; color: var(--accent-gold); font-weight: bold; text-transform: uppercase;"></div>
+            <div id="active-user-tag" onclick="triggerEasterEgg()" style="font-size: 10px; color: var(--accent-gold); font-weight: bold; text-transform: uppercase; cursor: pointer; user-select: none; padding: 5px;"></div>
             <button onclick="logout()" style="background:none; border:none; color:#555; font-size:10px; cursor:pointer">LOGOUT</button>
         </div>
         <h1>GaBonzoTan</h1>
-        <div class="version-tag">STABLE RELEASE v.1.6.8</div>
+        <div class="version-tag">STABLE RELEASE v.1.7.2</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -114,6 +117,10 @@
                 <div id="meter-val" style="font-size:9px; color:#aaa; text-align:center; font-family:monospace">0.0% LOGGO</div>
             </div>
         </div>
+    </div>
+
+    <div id="easter-egg-overlay" onclick="this.style.display='none'">
+        <img id="egg-img" src="" alt="Secret Easter Egg">
     </div>
 
     <div id="modal">
@@ -162,30 +169,42 @@
     <script>
         const SUPABASE_URL = 'https://xzqtltzfwddjqnnwxelw.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3PXww4EzHZcU468PyBRDvw_rzny7xRZ';
+        const EASTER_EGG_URL = 'https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/choko.png'; 
+        
         let supabaseClient, games = [], currentTab = 'history', currentUser = '';
+        let eggClickCount = 0;
 
-        // SESSION LOGIC (10 Minutes)
+        function formatDate(dateStr) {
+            if(!dateStr) return '??-??-????';
+            const parts = dateStr.split('-');
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+
+        function triggerEasterEgg() {
+            eggClickCount++;
+            if (eggClickCount >= 3) {
+                document.getElementById('egg-img').src = EASTER_EGG_URL;
+                document.getElementById('easter-egg-overlay').style.display = 'flex';
+                eggClickCount = 0;
+            }
+            setTimeout(() => eggClickCount = 0, 1000); 
+        }
+
         window.checkSessionOnLoad = function() {
             const savedUser = localStorage.getItem('gbt_user');
             const lastActive = localStorage.getItem('gbt_timestamp');
             const now = Date.now();
-            
             if (savedUser && lastActive && (now - lastActive < 600000)) {
-                // Within 10 mins (600,000 ms), keep logged in
                 currentUser = savedUser;
                 updateSessionTimestamp();
                 document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
                 document.getElementById('active-user-tag').innerText = "User: " + currentUser;
                 initSupabase();
-            } else {
-                logout(); // Expired or first time
-            }
+            } else { logout(); }
         };
 
-        function updateSessionTimestamp() {
-            localStorage.setItem('gbt_timestamp', Date.now());
-        }
+        function updateSessionTimestamp() { localStorage.setItem('gbt_timestamp', Date.now()); }
 
         window.checkPass = function() {
             const rawUser = document.getElementById('user-name').value.trim().toLowerCase();
@@ -203,8 +222,7 @@
         };
 
         window.logout = function() {
-            localStorage.removeItem('gbt_user');
-            localStorage.removeItem('gbt_timestamp');
+            localStorage.removeItem('gbt_user'); localStorage.removeItem('gbt_timestamp');
             document.getElementById('lock-screen').style.display = 'flex';
             document.getElementById('app-content').style.display = 'none';
         };
@@ -229,18 +247,22 @@
                     if(g.winner === 'Gabo') gWins++;
                     const div = document.createElement('div');
                     div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
-                    const logDate = g.logged_at ? new Date(g.logged_at).toLocaleDateString() : 'Legacy';
+                    
+                    const displayDate = formatDate(g.date);
+                    const logDateRaw = g.logged_at ? new Date(g.logged_at) : null;
+                    const logDateStr = logDateRaw ? `${String(logDateRaw.getDate()).padStart(2,'0')}-${String(logDateRaw.getMonth()+1).padStart(2,'0')}-${logDateRaw.getFullYear()}` : 'Legacy';
                     const loggedBy = g.logged_by || 'System';
+
                     div.innerHTML = `
                         <div class="actions">
                             <button class="action-btn edit-btn" onclick="editGame(${g.id})">✎</button>
                             <button class="action-btn del-btn" onclick="removeGame(${g.id})">&times;</button>
                         </div>
-                        <div style="font-size:12px; color:var(--text-dim); margin-bottom:4px">${g.date} • ${g.winningvp} VP</div>
+                        <div style="font-size:12px; color:var(--text-dim); margin-bottom:4px">${displayDate} • ${g.winningvp} VP</div>
                         ${g.map_used ? `<span class="map-info-label">${g.map_used}</span>` : ''}
                         <div>${g.players.map(p => `<span class="chip ${p===g.winner?'winner-chip':''}">${p}</span>`).join('')}</div>
                         ${g.notes ? `<div class="game-notes">${g.notes}</div>` : ''}
-                        <div class="logged-meta">Logged by ${loggedBy} on ${logDate}</div>`;
+                        <div class="logged-meta">Logged by ${loggedBy} on ${logDateStr}</div>`;
                     view.appendChild(div);
                 });
                 const h2h = document.createElement('div');
@@ -274,6 +296,34 @@
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
                         <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.2</div>
+                            <ul class="changelog-list">
+                                <li>Restored full, non-condensed changelog history.</li>
+                                <li>Committed to providing complete version history in all future updates.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.1</div>
+                            <ul class="changelog-list">
+                                <li>Linked official Easter Egg image from GitHub repository.</li>
+                                <li>Ensured DD-MM-YYYY format is applied consistently across all history views.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.0</div>
+                            <ul class="changelog-list">
+                                <li>Implemented 3-tap Easter Egg on User Tag for phone and PC.</li>
+                                <li>Added hidden image overlay system.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.9</div>
+                            <ul class="changelog-list">
+                                <li>Changed Game History dates to DD-MM-YYYY format.</li>
+                                <li>Formatted "Logged on" metadata dates to DD-MM-YYYY.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
                             <div class="changelog-ver">v.1.6.8</div>
                             <ul class="changelog-list">
                                 <li>Implemented 10-minute session timeout.</li>
@@ -298,7 +348,7 @@
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.6.5</div>
                             <ul class="changelog-list">
-                                <li>Fixed chronology issue: Forced strict descending order by Game Date regardless of when data is edited.</li>
+                                <li>Fixed chronology issue: Forced strict descending order by Game Date.</li>
                                 <li>Ensured edited games maintain their original position in the list.</li>
                             </ul>
                         </div>
@@ -312,7 +362,7 @@
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.6.3</div>
                             <ul class="changelog-list">
-                                <li>Identified missing metadata columns (logged_at, logged_by) as the cause of database errors.</li>
+                                <li>Identified missing metadata columns (logged_at, logged_by) as cause of errors.</li>
                                 <li>Updated instructions for complete database schema alignment.</li>
                             </ul>
                         </div>
@@ -321,7 +371,6 @@
                             <ul class="changelog-list">
                                 <li>Fixed potential Save/Edit failures related to database schema mismatch.</li>
                                 <li>Added visual "Map Name" display in History cards with blue styling.</li>
-                                <li>Clarified instructions for adding Map column in Supabase.</li>
                             </ul>
                         </div>
                         <div class="changelog-entry">
@@ -401,14 +450,7 @@
             }
         }
 
-        window.switchTab = (t) => { 
-            updateSessionTimestamp();
-            currentTab = t; 
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(t))); 
-            window.scrollTo(0,0); 
-            render(); 
-        };
-
+        window.switchTab = (t) => { updateSessionTimestamp(); currentTab = t; render(); };
         window.openModal = function(isEdit = false) {
             updateSessionTimestamp();
             document.getElementById('modal').style.display = 'flex';
@@ -474,20 +516,11 @@
                 if(finalName) { gameData.players.push(finalName); if(winnerRadio.value == i) gameData.winner = finalName; }
             }
             if(gameData.aiplayed) { gameData.players.push("AI"); if(winnerRadio.value === "AI") gameData.winner = "AI"; }
-            
             try {
-                if(editId) {
-                    const { error } = await supabaseClient.from('games').update(gameData).eq('id', editId);
-                    if(error) throw error;
-                } else {
-                    const { error } = await supabaseClient.from('games').insert([gameData]);
-                    if(error) throw error;
-                }
+                if(editId) { await supabaseClient.from('games').update(gameData).eq('id', editId); } 
+                else { await supabaseClient.from('games').insert([gameData]); }
                 closeModal(); fetchGames();
-            } catch (err) {
-                console.error(err);
-                alert("DATABASE ERROR: " + err.message);
-            }
+            } catch (err) { alert("DATABASE ERROR: " + err.message); }
         };
 
         window.removeGame = async function(id) { 
@@ -504,12 +537,8 @@
             const r = Math.random() * 100;
             if(n) n.style.left = r + '%';
             document.getElementById('meter-val').innerText = r.toFixed(1) + " % LOGGO";
-            
-            // Background session check
             const lastActive = localStorage.getItem('gbt_timestamp');
-            if(currentUser && lastActive && (Date.now() - lastActive > 600000)) {
-                logout();
-            }
+            if(currentUser && lastActive && (Date.now() - lastActive > 600000)) { logout(); }
         }, 1500);
     </script>
 </body>
