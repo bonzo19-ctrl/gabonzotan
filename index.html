@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GaBonzoTan v.1.2.6</title>
+    <title>GaBonzoTan v.1.2.8</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -12,9 +12,8 @@
         }
         body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         
-        /* LOCK SCREEN */
         #lock-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
-        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; margin-bottom: 10px; background: #222; color: white; border: 1px solid #444; }
+        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; margin-bottom: 10px; background: #222; color: white; border: 1px solid #444; width: 200px; }
         
         #app-content { width: 100%; max-width: 600px; padding: 40px 20px; filter: blur(10px); transition: filter 0.5s ease; }
         
@@ -32,7 +31,7 @@
         .del-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #444; cursor: pointer; font-size: 18px; }
         .del-btn:hover { color: var(--red); }
 
-        .chip { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin-right: 5px; border: 1px solid transparent; }
+        .chip { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin-right: 5px; border: 1px solid transparent; display: inline-block; margin-top: 5px; }
         .winner-chip { border-color: var(--accent-gold); color: var(--accent-gold); font-weight: bold; }
 
         .stat-circle { width: 80px; height: 80px; border: 3px solid var(--insight-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 15px auto; color: var(--insight-blue); font-weight: bold; }
@@ -45,8 +44,9 @@
         /* MODAL */
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #333; }
-        .row-entry { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 10px; align-items: center; }
-        select, input { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; }
+        .row-entry { display: grid; grid-template-columns: 1.5fr 1.5fr 40px; gap: 8px; margin-bottom: 10px; align-items: center; }
+        select, input { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        input[type="radio"], input[type="checkbox"] { width: auto; }
     </style>
 </head>
 <body>
@@ -91,35 +91,59 @@
                 <span style="font-weight:bold">AI Bot</span><span></span><input type="radio" name="winner" value="AI">
             </div>
             <div style="display:flex; gap:10px; margin-top:20px">
-                <button onclick="closeModal()" style="flex:1; background:#444; color:white; border:none; padding:10px; border-radius:4px">Cancel</button>
-                <button onclick="saveGame()" style="flex:1; background:var(--accent-gold); color:black; border:none; padding:10px; border-radius:4px; font-weight:bold">Save Game</button>
+                <button onclick="closeModal()" style="flex:1; background:#444; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer">Cancel</button>
+                <button onclick="saveGame()" style="flex:1; background:var(--accent-gold); color:black; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer">Save Game</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- !!! PASTE YOUR KEYS HERE !!! ---
         const SUPABASE_URL = 'https://xzqtltzfwddjqnnwxelw.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3PXww4EzHZcU468PyBRDvw_rzny7xRZ';
-        // ------------------------------------
 
-        const supabase = lib.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let supabaseClient;
         let games = [];
         let currentTab = 'history';
 
-        async function fetchGames() {
-            const { data, error } = await supabase.from('games').select('*').order('id', { ascending: false });
-            if (!error) { games = data; render(); }
-            else { document.getElementById('main-view').innerText = "Error loading data."; }
+        window.checkPass = function() {
+            const pass = document.getElementById('pass-input').value;
+            if(pass === "bowwow") {
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('app-content').style.filter = 'none';
+                initSupabase();
+            } else {
+                alert("Unauthorized Access.");
+            }
+        };
+
+        function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                fetchGames();
+            } catch (err) {
+                console.error("Supabase Init Error:", err);
+                document.getElementById('main-view').innerText = "Library Load Error.";
+            }
         }
 
-        async function saveGame() {
+        async function fetchGames() {
+            const { data, error } = await supabaseClient.from('games').select('*').order('date', { ascending: false });
+            if (!error) { 
+                games = data || []; 
+                render(); 
+            } else { 
+                document.getElementById('main-view').innerText = "Database Connection Error.";
+                console.error("Fetch Error:", error);
+            }
+        }
+
+        window.saveGame = async function() {
             const winnerRadio = document.querySelector('input[name="winner"]:checked');
             if(!winnerRadio) { alert("Select a winner!"); return; }
 
             const newGame = {
                 date: document.getElementById('game-date').value,
-                winningvp: parseInt(document.getElementById('winning-vp').value),
+                winningvp: parseInt(document.getElementById('winning-vp').value) || 0,
                 aiplayed: document.getElementById('ai-toggle').checked,
                 players: [],
                 winner: ""
@@ -139,22 +163,23 @@
                 if(winnerRadio.value === "AI") newGame.winner = "AI";
             }
 
-            const { error } = await supabase.from('games').insert([newGame]);
-            if(!error) { closeModal(); fetchGames(); }
-        }
+            const { error } = await supabaseClient.from('games').insert([newGame]);
+            if(!error) { closeModal(); fetchGames(); } else { console.error(error); alert("Error saving to cloud."); }
+        };
 
-        async function removeGame(id) {
+        window.removeGame = async function(id) {
             if(confirm("Permanently delete this game?")) {
-                await supabase.from('games').delete().eq('id', id);
+                await supabaseClient.from('games').delete().eq('id', id);
                 fetchGames();
             }
-        }
+        };
 
         function render() {
             const view = document.getElementById('main-view');
             view.innerHTML = '';
             
             if(currentTab === 'history') {
+                if(games.length === 0) { view.innerHTML = '<p style="text-align:center; color:#666">No games found.</p>'; }
                 games.forEach(g => {
                     const div = document.createElement('div');
                     div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
@@ -166,16 +191,28 @@
                     view.appendChild(div);
                 });
             } else if (currentTab === 'insights') {
-                // Dynamic Guest Insight logic
                 const allPlayers = [...new Set(games.flatMap(g => g.players))].sort();
+                if(allPlayers.length === 0) { view.innerHTML = '<p style="text-align:center">No data for insights.</p>'; return; }
+                
                 view.innerHTML = `<select id="ins-p" onchange="renderPlayerStats()" style="width:100%; margin-bottom:20px">
                     ${allPlayers.map(p => `<option value="${p}">${p}</option>`).join('')}
                 </select><div id="ins-result"></div>`;
                 renderPlayerStats();
+            } else if (currentTab === 'ai') {
+                const aiGames = games.filter(g => g.aiplayed);
+                const aiWins = aiGames.filter(g => g.winner === 'AI').length;
+                const rate = aiGames.length > 0 ? ((aiWins / aiGames.length) * 100).toFixed(1) : 0;
+                view.innerHTML = `
+                    <div class="history-item ai-win-card" style="text-align:center">
+                        <h2 style="color:var(--ai-purple); margin:0">AI System Stats</h2>
+                        <div style="font-size:40px; margin:10px 0">${aiWins} / ${aiGames.length}</div>
+                        <p>Total Wins / Total Participation</p>
+                        <div style="font-size:20px; color:var(--accent-gold)">Efficiency: ${rate}%</div>
+                    </div>`;
             }
         }
 
-        function renderPlayerStats() {
+        window.renderPlayerStats = function() {
             const p = document.getElementById('ins-p').value;
             const pGames = games.filter(g => g.players.includes(p));
             const wins = pGames.filter(g => g.winner === p).length;
@@ -187,15 +224,7 @@
                 </div>`;
         }
 
-        function checkPass() {
-            if(document.getElementById('pass-input').value === "bowwow") {
-                document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('app-content').style.filter = 'none';
-                fetchGames();
-            }
-        }
-
-        function openModal() {
+        window.openModal = function() {
             document.getElementById('modal').style.display = 'flex';
             document.getElementById('game-date').valueAsDate = new Date();
             const rows = document.getElementById('player-rows');
@@ -211,9 +240,9 @@
                     </div>`;
             }
         }
-        function closeModal() { document.getElementById('modal').style.display='none'; }
-        function toggleAIRow() { document.getElementById('ai-row').style.display = document.getElementById('ai-toggle').checked ? 'grid' : 'none'; }
-        function switchTab(t) { 
+        window.closeModal = function() { document.getElementById('modal').style.display='none'; }
+        window.toggleAIRow = function() { document.getElementById('ai-row').style.display = document.getElementById('ai-toggle').checked ? 'grid' : 'none'; }
+        window.switchTab = function(t) { 
             currentTab = t; 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(t)));
             render(); 
