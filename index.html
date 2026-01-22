@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.7.4</title>
+    <title>GaBonzoTan v.1.8.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -14,21 +14,27 @@
         }
         body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         
+        .app-logo { 
+            width: 100%; 
+            max-width: 280px; 
+            height: auto; 
+            margin: 0 auto 10px auto; 
+            display: block;
+        }
+        .logo-container { text-align: center; margin-bottom: 25px; }
+
         #lock-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
-        #lock-screen h1 { font-weight: 900; letter-spacing: 1px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px; font-size: 1.5rem; white-space: nowrap; }
-        #lock-screen .warning-msg { font-style: italic; color: #666; font-size: 13px; margin-bottom: 25px; }
+        #lock-screen .warning-msg { font-style: italic; color: #666; font-size: 13px; margin-bottom: 25px; margin-top: -10px; }
         
         .login-box { display: flex; flex-direction: column; gap: 10px; width: 240px; }
         #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; background: #1a1a1a; color: white; border: 1px solid #333; font-size: 16px; text-transform: lowercase; }
-        #lock-screen input::placeholder { text-transform: none; }
         #lock-screen .version-tag { margin-top: 60px; }
         
         #app-content { width: 100%; max-width: 500px; padding: 40px 20px; display: none; position: relative; }
-        h1 { text-align: center; font-weight: 900; letter-spacing: 4px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px; font-size: 2.2rem; }
-        .version-tag { text-align: center; font-size: 10px; color: #555; margin-bottom: 30px; letter-spacing: 1px; }
+        .version-tag { text-align: center; font-size: 10px; color: #555; margin-bottom: 30px; letter-spacing: 1px; margin-top: -15px; }
         
         .nav-tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .tab-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; padding: 5px 10px; transition: 0.3s; white-space: nowrap; }
+        .tab-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; padding: 5px 10px; transition: 0.3s; white-space: nowrap; outline: none; }
         .tab-btn.active { color: var(--accent-gold); border-bottom: 2px solid var(--accent-gold); }
 
         .add-game-btn { width: 100%; background: var(--accent-gold); color: black; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; font-size: 16px; }
@@ -61,7 +67,6 @@
         .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 440px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
         .row-entry { display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 12px; align-items: center; }
         select, input, textarea { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
-        textarea { resize: vertical; min-height: 60px; font-family: inherit; }
         
         #easter-egg-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 10000; cursor: pointer; }
         #easter-egg-overlay img { max-width: 90%; max-height: 80%; border: 2px solid var(--accent-gold); box-shadow: 0 0 20px var(--accent-gold); border-radius: 10px; }
@@ -78,23 +83,28 @@
 <body onload="checkSessionOnLoad()">
 
     <div id="lock-screen">
-        <h1>WELCOME TO GABONZOTAN</h1>
+        <div class="logo-container">
+            <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo">
+        </div>
         <div class="warning-msg">(If you're not Gabo or Nico, get the fuck out of here.)</div>
         <div class="login-box">
             <input type="text" id="user-name" placeholder="Name" autocomplete="off" onkeydown="if(event.key==='Enter') document.getElementById('pass-input').focus()">
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.7.4</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.0</div>
     </div>
 
     <div id="app-content">
-        <div style="display:flex; justify-content: space-between; align-items: center;">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div id="active-user-tag" onclick="triggerEasterEgg()" style="font-size: 10px; color: var(--accent-gold); font-weight: bold; text-transform: uppercase; cursor: pointer; user-select: none; padding: 5px;"></div>
             <button onclick="logout()" style="background:none; border:none; color:#555; font-size:10px; cursor:pointer">LOGOUT</button>
         </div>
-        <h1>GaBonzoTan</h1>
-        <div class="version-tag">STABLE RELEASE v.1.7.4</div>
+        
+        <div class="logo-container">
+            <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo">
+        </div>
+        <div class="version-tag">STABLE RELEASE v.1.8.0</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -152,7 +162,7 @@
                 </select>
             </div>
             
-            <div style="display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 5px; align-items: center;">
+            <div id="player-rows-header" style="display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 5px; align-items: center;">
                 <span style="font-size: 10px; color: #666; text-transform: uppercase;">Player</span>
                 <span></span>
                 <span style="font-size: 10px; color: var(--accent-gold); text-transform: uppercase; text-align: center; font-weight: bold; white-space: nowrap;">Won By</span>
@@ -261,11 +271,8 @@
                     if(g.winner === 'Gabo') gWins++;
                     const div = document.createElement('div');
                     div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
-                    
                     const displayDate = formatDate(g.date);
-                    // Force the manual game number to show next to date
                     const gameNumSuffix = ` #${g.game_number || 1}`;
-                    
                     const logDateRaw = g.logged_at ? new Date(g.logged_at) : null;
                     const logDateStr = logDateRaw ? `${String(logDateRaw.getDate()).padStart(2,'0')}-${String(logDateRaw.getMonth()+1).padStart(2,'0')}-${logDateRaw.getFullYear()}` : 'Legacy';
                     const loggedBy = g.logged_by || 'System';
@@ -312,6 +319,47 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.0</div>
+                            <ul class="changelog-list">
+                                <li>Updated application asset URL to gabonzotan2.png for improved transparency and rendering.</li>
+                                <li>Asset updated across both Password/Lock Screen and Main Dashboard.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.9</div>
+                            <ul class="changelog-list">
+                                <li>Updated both Lock Screen and Header to new asset: gabonzotan1.png.</li>
+                                <li>Cleaned up redundant CSS filters on the logo to ensure natural appearance.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.8</div>
+                            <ul class="changelog-list">
+                                <li>Added CSS drop-shadow and rendering filters to the logo for better visibility.</li>
+                                <li>Optimized logo container spacing for high-resolution screens.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.7</div>
+                            <ul class="changelog-list">
+                                <li>Updated main logo URL to use verified transparent asset.</li>
+                                <li>Synchronized logo consistency across password and main screens.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.6</div>
+                            <ul class="changelog-list">
+                                <li>Replaced text titles with custom Catan-style GaBonzoTan logo.</li>
+                                <li>Optimized logo placement for both lock screen and main header.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.7.5</div>
+                            <ul class="changelog-list">
+                                <li>Fixed tab highlighting: Active tab now correctly turns yellow, while others dim.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.7.4</div>
                             <ul class="changelog-list">
@@ -482,7 +530,15 @@
             }
         }
 
-        window.switchTab = (t) => { updateSessionTimestamp(); currentTab = t; render(); };
+        window.switchTab = (t) => { 
+            updateSessionTimestamp(); 
+            currentTab = t; 
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const tabMap = { 'history': 't-history', 'insights': 't-insights', 'ai': 't-ai' };
+            if (tabMap[t]) document.getElementById(tabMap[t]).classList.add('active');
+            render(); 
+        };
+
         window.openModal = function(isEdit = false) {
             updateSessionTimestamp();
             document.getElementById('modal').style.display = 'flex';
