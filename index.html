@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.2</title>
+    <title>GaBonzoTan v.1.8.7</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-dark: #121212; --card-dark: #1e1e1e; --accent-gold: #f1c40f;
             --ai-purple: #9b59b6; --text-dim: #b3b3b3; --insight-blue: #3498db; --red: #e74c3c;
             --about-green: #27ae60;
+            --improvement-green: #1abc9c;
         }
         body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         
@@ -53,17 +54,20 @@
 
         .h2h-tracker { text-align: center; font-style: italic; color: var(--ai-purple); font-size: 14px; margin: 10px 0; padding: 5px; }
 
-        .app-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #222; }
-        .footer-btns { display: flex; flex-direction: column; gap: 8px; }
-        .wipe-btn { background: #2a1111; color: var(--red); border: 1px solid var(--red); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; width: 120px; }
-        .changelog-btn { background: #1e112a; color: var(--ai-purple); border: 1px solid var(--ai-purple); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; width: 120px; text-transform: uppercase; }
-        .about-btn { background: #112a1a; color: var(--about-green); border: 1px solid var(--about-green); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; width: 120px; text-transform: uppercase; }
+        .app-footer { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px; padding-top: 15px; border-top: 1px solid #222; gap: 10px; }
+        .footer-btns { display: flex; flex-direction: row; gap: 6px; flex-wrap: wrap; flex: 1; }
+        .footer-btns button { padding: 8px 4px; border-radius: 6px; font-size: 7px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex: 1; min-width: 75px; height: 32px; }
+        
+        .wipe-btn { background: #2a1111; color: var(--red); border: 1px solid var(--red); }
+        .changelog-btn { background: #1e112a; color: var(--ai-purple); border: 1px solid var(--ai-purple); }
+        .improvement-btn { background: #112a28; color: var(--improvement-green); border: 1px solid var(--improvement-green); }
+        .about-btn { background: #112a1a; color: var(--about-green); border: 1px solid var(--about-green); }
 
-        .loggometer { width: 110px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
-        .meter-dial { height: 8px; background: #222; border-radius: 5px; position: relative; overflow: hidden; margin: 5px 0; }
+        .loggometer { width: 90px; background: #111; padding: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
+        .meter-dial { height: 6px; background: #222; border-radius: 5px; position: relative; overflow: hidden; margin: 4px 0; }
         .meter-needle { position: absolute; height: 100%; width: 4px; background: var(--accent-gold); left: 0%; transition: left 0.3s ease; }
 
-        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        #modal, #improvement-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 440px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
         .row-entry { display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 12px; align-items: center; }
         select, input, textarea { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
@@ -80,6 +84,12 @@
         .changelog-list li { margin-bottom: 6px; position: relative; padding-left: 12px; line-height: 1.4; }
         .changelog-list li::before { content: "•"; position: absolute; left: 0; color: var(--insight-blue); }
         .back-nav-btn { width: auto; background: #1e112a; color: var(--ai-purple); border: solid 1px var(--ai-purple); padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; letter-spacing: 1px; display: block; margin: 0 auto; }
+
+        .feedback-list { margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; }
+        .feedback-card { background: #161616; padding: 10px; border-radius: 6px; margin-bottom: 10px; position: relative; border-left: 3px solid var(--improvement-green); }
+        .feedback-text { font-size: 12px; color: #ddd; margin-bottom: 5px; white-space: pre-wrap; }
+        .feedback-meta { font-size: 9px; color: #666; text-transform: uppercase; }
+        .feedback-actions { position: absolute; top: 5px; right: 8px; display: flex; gap: 8px; }
     </style>
 </head>
 <body onload="checkSessionOnLoad()">
@@ -94,7 +104,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.2</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.7</div>
     </div>
 
     <div id="app-content">
@@ -106,7 +116,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.2</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.7</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -121,12 +131,13 @@
             <div class="footer-btns">
                 <button class="wipe-btn" onclick="alert('Nice try!')">WIPE DATABASE</button>
                 <button class="changelog-btn" onclick="switchTab('changelog')">CHANGELOGGO</button>
+                <button class="improvement-btn" onclick="openImprovementModal()">IMPROVEMENTS</button>
                 <button class="about-btn" onclick="alert('Catan Tracker for Bonzito and Gabito. Rar.')">ABOUT</button>
             </div>
             <div class="loggometer" onclick="alert('RAAAAAAAR')">
-                <div style="font-size:8px; color:#666; text-align:center">LOGGOMETER™</div>
+                <div style="font-size:7px; color:#666; text-align:center">LOGGOMETER™</div>
                 <div class="meter-dial"><div id="needle" class="meter-needle"></div></div>
-                <div id="meter-val" style="font-size:9px; color:#aaa; text-align:center; font-family:monospace">0.0% LOGGO</div>
+                <div id="meter-val" style="font-size:8px; color:#aaa; text-align:center; font-family:monospace">0.0% LOGGO</div>
             </div>
         </div>
     </div>
@@ -184,6 +195,24 @@
             <div style="display:flex; gap:10px; margin-top:20px">
                 <button onclick="closeModal()" style="flex:1; background:#444; color:white; border:none; padding:12px; border-radius:4px; cursor:pointer">Cancel</button>
                 <button onclick="saveGame()" style="flex:1; background:var(--accent-gold); color:black; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="improvement-modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:var(--improvement-green)">Improvements</h3>
+            <div style="margin-top:15px">
+                <input type="hidden" id="edit-feedback-id">
+                <textarea id="improvement-content" placeholder="What should we change? (e.g., New maps, UI tweaks...)" style="height: 80px;"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px">
+                <button onclick="closeImprovementModal()" style="flex:1; background:#444; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer">Close</button>
+                <button id="save-improvement-btn" onclick="saveImprovement()" style="flex:1; background:var(--improvement-green); color:black; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer">Save Note</button>
+            </div>
+
+            <div id="feedback-list" class="feedback-list">
+                <div style="text-align:center; color:#555; font-size:12px;">Loading feedback...</div>
             </div>
         </div>
     </div>
@@ -324,6 +353,47 @@
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
                         <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.7</div>
+                            <ul class="changelog-list">
+                                <li>Full restoration of all previous changelog entries.</li>
+                                <li>Ensured manual correction of condensation issue.</li>
+                                <li>Stability check on feedback deletion functionality.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.6</div>
+                            <ul class="changelog-list">
+                                <li>Fixed critical bug preventing the deletion of improvement notes.</li>
+                                <li>Added explicit database table targeting for feedback deletions.</li>
+                                <li>Fixed scoping issues for the improvement 'X' button.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.5</div>
+                            <ul class="changelog-list">
+                                <li>Updated footer button labels to "WIPE DATABASE", "CHANGELOGGO", "IMPROVEMENTS", and "ABOUT".</li>
+                                <li>Refined button alignment to sit immediately below the separator line.</li>
+                                <li>Attempted fix for improvement deletion targeting.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.4</div>
+                            <ul class="changelog-list">
+                                <li>Aligned footer buttons horizontally for a sleeker look.</li>
+                                <li>Added live feedback list to Improvements modal.</li>
+                                <li>Implemented edit and delete permissions for the original author of improvements.</li>
+                                <li>UX: Improvements window now remains open after saving/modifying notes.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.3</div>
+                            <ul class="changelog-list">
+                                <li>Added "IMPROVEMENTS" green button to the footer.</li>
+                                <li>Implemented Improvements popup modal for user feedback.</li>
+                                <li>Connected feedback submissions to Supabase "feedback" table.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.2</div>
                             <ul class="changelog-list">
                                 <li>Implemented mandatory field validation for game creation and editing.</li>
@@ -347,47 +417,6 @@
                             </ul>
                         </div>
                         <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.9</div>
-                            <ul class="changelog-list">
-                                <li>Updated both Lock Screen and Header to new asset: gabonzotan1.png.</li>
-                                <li>Cleaned up redundant CSS filters on the logo to ensure natural appearance.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.8</div>
-                            <ul class="changelog-list">
-                                <li>Added CSS drop-shadow and rendering filters to the logo for better visibility.</li>
-                                <li>Optimized logo container spacing for high-resolution screens.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.7</div>
-                            <ul class="changelog-list">
-                                <li>Updated main logo URL to use verified transparent asset.</li>
-                                <li>Synchronized logo consistency across password and main screens.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.6</div>
-                            <ul class="changelog-list">
-                                <li>Replaced text titles with custom Catan-style GaBonzoTan logo.</li>
-                                <li>Optimized logo placement for both lock screen and main header.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.5</div>
-                            <ul class="changelog-list">
-                                <li>Fixed tab highlighting: Active tab now correctly turns yellow, while others dim.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.4</div>
-                            <ul class="changelog-list">
-                                <li>Manually assigned Game Numbers are now always displayed next to the date.</li>
-                                <li>Improved sorting logic to strictly prioritize date then game number.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
                             <div class="changelog-ver">v.1.7.3</div>
                             <ul class="changelog-list">
                                 <li>Implemented Game Number sorting to keep latest games at the top regardless of edits.</li>
@@ -396,147 +425,7 @@
                             </ul>
                         </div>
                         <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.2</div>
-                            <ul class="changelog-list">
-                                <li>Restored full, non-condensed changelog history.</li>
-                                <li>Committed to providing complete version history in all future updates.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.1</div>
-                            <ul class="changelog-list">
-                                <li>Linked official Easter Egg image from GitHub repository.</li>
-                                <li>Ensured DD-MM-YYYY format is applied consistently across all history views.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.7.0</div>
-                            <ul class="changelog-list">
-                                <li>Implemented 3-tap Easter Egg on User Tag for phone and PC.</li>
-                                <li>Added hidden image overlay system.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.9</div>
-                            <ul class="changelog-list">
-                                <li>Changed Game History dates to DD-MM-YYYY format.</li>
-                                <li>Formatted "Logged on" metadata dates to DD-MM-YYYY.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.8</div>
-                            <ul class="changelog-list">
-                                <li>Implemented 10-minute session timeout.</li>
-                                <li>Session persistence enabled: refresh without logging back in for up to 10 mins.</li>
-                                <li>Automatic activity tracking resets the 10m timer upon app interactions.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.7</div>
-                            <ul class="changelog-list">
-                                <li>Fixed "WON BY" header layout to prevent text wrapping.</li>
-                                <li>Optimized modal layout for better column alignment.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.6</div>
-                            <ul class="changelog-list">
-                                <li>Added "WON BY" column header in the game creation/edit modal for clarity.</li>
-                                <li>Restored specialized Insights tab styling (player win circles and borders).</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.5</div>
-                            <ul class="changelog-list">
-                                <li>Fixed chronology issue: Forced strict descending order by Game Date.</li>
-                                <li>Ensured edited games maintain their original position in the list.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.4</div>
-                            <ul class="changelog-list">
-                                <li>Identified missing 'notes' column as a blocker for saving.</li>
-                                <li>Updated schema verification to prevent future silent save failures.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.3</div>
-                            <ul class="changelog-list">
-                                <li>Identified missing metadata columns (logged_at, logged_by) as cause of errors.</li>
-                                <li>Updated instructions for complete database schema alignment.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.2</div>
-                            <ul class="changelog-list">
-                                <li>Fixed potential Save/Edit failures related to database schema mismatch.</li>
-                                <li>Added visual "Map Name" display in History cards with blue styling.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.1</div>
-                            <ul class="changelog-list">
-                                <li>Added Map selection dropdown to game entries (First Island, Ore For Wool, etc.).</li>
-                                <li>Added Map display tag to history cards.</li>
-                                <li>Enabled editing functionality for legacy games to retroactively add map data.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.6.0</div>
-                            <ul class="changelog-list">
-                                <li>Restored the "ABOUT" button to the footer.</li>
-                                <li>Styled ABOUT button in forest green beneath the changelog.</li>
-                                <li>Added custom alert message for the About section.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.9</div>
-                            <ul class="changelog-list">
-                                <li>Restored full changelog history for all previous versions.</li>
-                                <li>Committed to non-condensed logging for future updates.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.8</div>
-                            <ul class="changelog-list">
-                                <li>Dropped version tag on Lock Screen for better spacing.</li>
-                                <li>Improved contrast for "Logged by" metadata in history cards.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.7</div>
-                            <ul class="changelog-list">
-                                <li>Disabled auto-login; app forces login on every refresh.</li>
-                                <li>Hard-coded manual login flow for enhanced security.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.6</div>
-                            <ul class="changelog-list">
-                                <li>Replaced user dropdown with text input on Lock Screen.</li>
-                                <li>Implemented lowercase normalization for login names.</li>
-                                <li>Added auto-focus flow between login inputs.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.5</div>
-                            <ul class="changelog-list">
-                                <li>Added User selection (Nico/Gabo) to Lock Screen.</li>
-                                <li>Implemented "Logged By" and "Log Date" metadata for game entries.</li>
-                                <li>Added Logout functionality and session persistence (Local Storage).</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.4</div>
-                            <ul class="changelog-list">
-                                <li>Added left arrow to "BACK TO GABONZOTAN" button.</li>
-                                <li>Changed footer button to all-caps "CHANGELOGGO".</li>
-                                <li>Updated modal header to "Add A Game".</li>
-                                <li>Expanded history to include detailed legacy version milestones.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.0.0 - v.1.5.3</div>
+                            <div class="changelog-ver">v.1.0.0 - v.1.7.2</div>
                             <ul class="changelog-list">
                                 <li>Integrated Supabase for real-time cloud database synchronization.</li>
                                 <li>Implemented AI Bot tracking and specialized win styling.</li>
@@ -609,51 +498,101 @@
 
         window.saveGame = async function() {
             updateSessionTimestamp();
-            
-            // Validation Checks
             const gameMap = document.getElementById('game-map').value;
             const gameVP = parseInt(document.getElementById('winning-vp').value);
             const gameNum = document.getElementById('game-number').value;
             const winnerRadio = document.querySelector('input[name="winner"]:checked');
             const isAIIncluded = document.getElementById('ai-toggle').checked;
-
             if(!gameMap) { alert("Please select a Map."); return; }
             if(!gameVP || gameVP <= 0) { alert("Winning VP must be greater than 0."); return; }
             if(!gameNum) { alert("Please enter a Game Number."); return; }
-
             const editId = document.getElementById('editing-id').value;
             const gameData = { 
-                date: document.getElementById('game-date').value, 
-                winningvp: gameVP,
-                game_number: parseInt(gameNum) || 1,
-                map_used: gameMap,
-                aiplayed: isAIIncluded, 
-                players: [], winner: "", notes: document.getElementById('game-notes').value.trim(),
-                logged_by: currentUser, logged_at: new Date().toISOString()
+                date: document.getElementById('game-date').value, winningvp: gameVP, game_number: parseInt(gameNum) || 1, map_used: gameMap, aiplayed: isAIIncluded, players: [], winner: "", notes: document.getElementById('game-notes').value.trim(), logged_by: currentUser, logged_at: new Date().toISOString()
             };
-
             for(let i=1; i<=6; i++) {
                 const sel = document.getElementById(`p${i}-sel`).value;
                 const finalName = sel === 'Guest' ? document.getElementById(`p${i}-name`).value.trim() : sel;
-                if(finalName) { 
-                    gameData.players.push(finalName); 
-                    if(winnerRadio && winnerRadio.value == i) gameData.winner = finalName; 
-                }
+                if(finalName) { gameData.players.push(finalName); if(winnerRadio && winnerRadio.value == i) gameData.winner = finalName; }
             }
-            if(isAIIncluded) { 
-                gameData.players.push("AI"); 
-                if(winnerRadio && winnerRadio.value === "AI") gameData.winner = "AI"; 
-            }
-
-            // Validation: Winner and Player Count
+            if(isAIIncluded) { gameData.players.push("AI"); if(winnerRadio && winnerRadio.value === "AI") gameData.winner = "AI"; }
             if(gameData.players.length < 2) { alert("At least two players are required (AI counts)."); return; }
             if(!gameData.winner) { alert("Please select which player won the game."); return; }
-
             try {
                 if(editId) { await supabaseClient.from('games').update(gameData).eq('id', editId); } 
                 else { await supabaseClient.from('games').insert([gameData]); }
                 closeModal(); fetchGames();
             } catch (err) { alert("DATABASE ERROR: " + err.message); }
+        };
+
+        window.openImprovementModal = () => {
+            updateSessionTimestamp();
+            document.getElementById('edit-feedback-id').value = "";
+            document.getElementById('improvement-content').value = "";
+            document.getElementById('improvement-modal').style.display = 'flex';
+            fetchFeedback();
+        };
+
+        window.closeImprovementModal = () => {
+            document.getElementById('improvement-modal').style.display = 'none';
+        };
+
+        async function fetchFeedback() {
+            const list = document.getElementById('feedback-list');
+            const { data, error } = await supabaseClient.from('feedback').select('*').order('created_at', { ascending: false });
+            if(error) { list.innerHTML = `<div style="color:var(--red); font-size:10px;">Error: ${error.message}</div>`; return; }
+            if(data.length === 0) { list.innerHTML = `<div style="text-align:center; color:#444; font-size:11px;">No feedback yet.</div>`; return; }
+            list.innerHTML = data.map(f => {
+                const isOwner = f.author === currentUser;
+                const d = new Date(f.created_at);
+                const ds = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+                const safeContent = f.content.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                return `
+                <div class="feedback-card">
+                    ${isOwner ? `
+                    <div class="feedback-actions">
+                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="editFeedback(${f.id}, '${safeContent}')">✎</span>
+                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="deleteFeedback(${f.id})">&times;</span>
+                    </div>` : ''}
+                    <div class="feedback-text">${f.content}</div>
+                    <div class="feedback-meta">By ${f.author} • ${ds}</div>
+                </div>`;
+            }).join('');
+        }
+
+        window.saveImprovement = async () => {
+            updateSessionTimestamp();
+            const content = document.getElementById('improvement-content').value.trim();
+            const editId = document.getElementById('edit-feedback-id').value;
+            if(!content) { alert("Please enter a note."); return; }
+            const btn = document.getElementById('save-improvement-btn');
+            btn.disabled = true; btn.innerText = "Saving...";
+            try {
+                if(editId) { await supabaseClient.from('feedback').update({ content: content }).eq('id', editId); }
+                else { await supabaseClient.from('feedback').insert([{ content: content, author: currentUser }]); }
+                document.getElementById('improvement-content').value = "";
+                document.getElementById('edit-feedback-id').value = "";
+                btn.innerText = "Save Note";
+                fetchFeedback();
+            } catch (err) { alert("DB ERROR: " + err.message); } finally { btn.disabled = false; }
+        };
+
+        window.editFeedback = (id, content) => {
+            document.getElementById('edit-feedback-id').value = id;
+            document.getElementById('improvement-content').value = content;
+            document.getElementById('improvement-content').focus();
+        };
+
+        window.deleteFeedback = async (id) => {
+            if(!confirm("Delete this improvement?")) return;
+            try {
+                const { error } = await supabaseClient.from('feedback').delete().eq('id', id);
+                if(error) throw error;
+                fetchFeedback();
+            } catch (err) { 
+                console.error("Delete failed:", err);
+                alert("DELETE ERROR: " + err.message); 
+            }
         };
 
         window.removeGame = async function(id) { 
@@ -669,7 +608,8 @@
             const n = document.getElementById('needle');
             const r = Math.random() * 100;
             if(n) n.style.left = r + '%';
-            document.getElementById('meter-val').innerText = r.toFixed(1) + " % LOGGO";
+            const m = document.getElementById('meter-val');
+            if(m) m.innerText = r.toFixed(1) + " % LOGGO";
             const lastActive = localStorage.getItem('gbt_timestamp');
             if(currentUser && lastActive && (Date.now() - lastActive > 600000)) { logout(); }
         }, 1500);
