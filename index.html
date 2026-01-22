@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.6.7</title>
+    <title>GaBonzoTan v.1.6.8</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -72,7 +72,7 @@
         .back-nav-btn { width: auto; background: #1e112a; color: var(--ai-purple); border: 1px solid var(--ai-purple); padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; letter-spacing: 1px; display: block; margin: 0 auto; }
     </style>
 </head>
-<body onload="clearLoginOnLoad()">
+<body onload="checkSessionOnLoad()">
 
     <div id="lock-screen">
         <h1>WELCOME TO GABONZOTAN</h1>
@@ -82,7 +82,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.6.7</div>
+        <div class="version-tag">STABLE RELEASE v.1.6.8</div>
     </div>
 
     <div id="app-content">
@@ -91,7 +91,7 @@
             <button onclick="logout()" style="background:none; border:none; color:#555; font-size:10px; cursor:pointer">LOGOUT</button>
         </div>
         <h1>GaBonzoTan</h1>
-        <div class="version-tag">STABLE RELEASE v.1.6.7</div>
+        <div class="version-tag">STABLE RELEASE v.1.6.8</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -164,11 +164,28 @@
         const SUPABASE_KEY = 'sb_publishable_3PXww4EzHZcU468PyBRDvw_rzny7xRZ';
         let supabaseClient, games = [], currentTab = 'history', currentUser = '';
 
-        window.clearLoginOnLoad = function() {
-            localStorage.removeItem('gbt_user');
-            document.getElementById('lock-screen').style.display = 'flex';
-            document.getElementById('app-content').style.display = 'none';
+        // SESSION LOGIC (10 Minutes)
+        window.checkSessionOnLoad = function() {
+            const savedUser = localStorage.getItem('gbt_user');
+            const lastActive = localStorage.getItem('gbt_timestamp');
+            const now = Date.now();
+            
+            if (savedUser && lastActive && (now - lastActive < 600000)) {
+                // Within 10 mins (600,000 ms), keep logged in
+                currentUser = savedUser;
+                updateSessionTimestamp();
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                document.getElementById('active-user-tag').innerText = "User: " + currentUser;
+                initSupabase();
+            } else {
+                logout(); // Expired or first time
+            }
         };
+
+        function updateSessionTimestamp() {
+            localStorage.setItem('gbt_timestamp', Date.now());
+        }
 
         window.checkPass = function() {
             const rawUser = document.getElementById('user-name').value.trim().toLowerCase();
@@ -177,6 +194,7 @@
             if(pass === "bowwow") {
                 currentUser = rawUser.charAt(0).toUpperCase() + rawUser.slice(1);
                 localStorage.setItem('gbt_user', currentUser);
+                updateSessionTimestamp();
                 document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
                 document.getElementById('active-user-tag').innerText = "User: " + currentUser;
@@ -184,7 +202,12 @@
             } else { alert("Unauthorized."); }
         };
 
-        window.logout = function() { localStorage.removeItem('gbt_user'); location.reload(); };
+        window.logout = function() {
+            localStorage.removeItem('gbt_user');
+            localStorage.removeItem('gbt_timestamp');
+            document.getElementById('lock-screen').style.display = 'flex';
+            document.getElementById('app-content').style.display = 'none';
+        };
 
         function initSupabase() { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); fetchGames(); }
         async function fetchGames() {
@@ -250,6 +273,14 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.8</div>
+                            <ul class="changelog-list">
+                                <li>Implemented 10-minute session timeout.</li>
+                                <li>Session persistence enabled: refresh without logging back in for up to 10 mins.</li>
+                                <li>Automatic activity tracking resets the 10m timer upon app interactions.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.6.7</div>
                             <ul class="changelog-list">
@@ -370,8 +401,16 @@
             }
         }
 
-        window.switchTab = (t) => { currentTab = t; document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(t))); window.scrollTo(0,0); render(); };
+        window.switchTab = (t) => { 
+            updateSessionTimestamp();
+            currentTab = t; 
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(t))); 
+            window.scrollTo(0,0); 
+            render(); 
+        };
+
         window.openModal = function(isEdit = false) {
+            updateSessionTimestamp();
             document.getElementById('modal').style.display = 'flex';
             if(!isEdit) {
                 document.getElementById('editing-id').value = "";
@@ -392,7 +431,9 @@
                 </div>`;
             }
         };
+
         window.editGame = function(id) {
+            updateSessionTimestamp();
             const game = games.find(g => g.id === id);
             openModal(true);
             document.getElementById('editing-id').value = id;
@@ -413,7 +454,9 @@
                 if(game.winner === pName && pName !== "") winRadio.checked = true;
             }
         };
+
         window.saveGame = async function() {
+            updateSessionTimestamp();
             const winnerRadio = document.querySelector('input[name="winner"]:checked');
             if(!winnerRadio) { alert("Select a winner!"); return; }
             const editId = document.getElementById('editing-id').value;
@@ -446,7 +489,12 @@
                 alert("DATABASE ERROR: " + err.message);
             }
         };
-        window.removeGame = async function(id) { if(confirm("Delete game?")) { await supabaseClient.from('games').delete().eq('id', id); fetchGames(); } };
+
+        window.removeGame = async function(id) { 
+            updateSessionTimestamp();
+            if(confirm("Delete game?")) { await supabaseClient.from('games').delete().eq('id', id); fetchGames(); } 
+        };
+
         window.toggleGuestInput = (idx) => { const sel = document.getElementById(`p${idx}-sel`).value; document.getElementById(`p${idx}-name`).style.display = (sel === 'Guest' ? 'block' : 'none'); };
         window.closeModal = () => document.getElementById('modal').style.display='none';
         window.toggleAIRow = () => document.getElementById('ai-row').style.display = document.getElementById('ai-toggle').checked ? 'grid' : 'none';
@@ -456,6 +504,12 @@
             const r = Math.random() * 100;
             if(n) n.style.left = r + '%';
             document.getElementById('meter-val').innerText = r.toFixed(1) + " % LOGGO";
+            
+            // Background session check
+            const lastActive = localStorage.getItem('gbt_timestamp');
+            if(currentUser && lastActive && (Date.now() - lastActive > 600000)) {
+                logout();
+            }
         }, 1500);
     </script>
 </body>
