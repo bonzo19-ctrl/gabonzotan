@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GaBonzoTan v.1.3.5</title>
+    <title>GaBonzoTan v.1.4.2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-dark: #121212; --card-dark: #1e1e1e; --accent-gold: #f1c40f;
             --ai-purple: #9b59b6; --text-dim: #b3b3b3; --insight-blue: #3498db; --red: #e74c3c;
         }
-        body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         
-        #lock-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
-        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; margin-bottom: 10px; background: #222; color: white; border: 1px solid #444; width: 200px; }
+        #lock-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        #lock-screen h1 { font-weight: 900; letter-spacing: 4px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px; font-size: 2.2rem; }
+        #lock-screen .warning-msg { font-style: italic; color: #666; font-size: 13px; margin-bottom: 25px; }
+        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; margin-bottom: 10px; background: #1a1a1a; color: white; border: 1px solid #333; width: 220px; font-size: 16px; }
         
-        #app-content { width: 100%; max-width: 500px; padding: 40px 20px; filter: blur(10px); transition: filter 0.5s ease; position: relative; }
+        /* UPDATED: Brighter Version Tag for scannability */
+        #lock-screen .version-tag { font-size: 10px; color: #888; margin-top: 30px; letter-spacing: 1px; font-weight: bold; }
         
+        #app-content { width: 100%; max-width: 500px; padding: 40px 20px; display: none; position: relative; }
         .about-btn { position: absolute; top: 20px; right: 20px; background: none; border: 1px solid #444; color: #666; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; text-transform: uppercase; }
-        .about-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
-
         h1 { text-align: center; font-weight: 900; letter-spacing: 4px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px; font-size: 2.2rem; }
         .version-tag { text-align: center; font-size: 10px; color: #555; margin-bottom: 30px; letter-spacing: 1px; }
         
@@ -32,19 +34,19 @@
         .history-item { background: var(--card-dark); border-radius: 8px; padding: 15px; margin-bottom: 12px; border-left: 4px solid var(--accent-gold); position: relative; }
         .ai-win-card { border-left-color: var(--ai-purple); }
         
-        .del-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #444; cursor: pointer; font-size: 18px; }
+        .actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; }
+        .action-btn { background: none; border: none; color: #444; cursor: pointer; font-size: 16px; transition: color 0.2s; }
+        .edit-btn:hover { color: var(--insight-blue); }
         .del-btn:hover { color: var(--red); }
 
-        .chip { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin-right: 5px; border: 1px solid transparent; display: inline-block; margin-top: 5px; }
+        .chip { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin-right: 8px; border: 1px solid transparent; display: inline-block; margin-top: 8px; }
         .winner-chip { border-color: var(--accent-gold); color: var(--accent-gold); font-weight: bold; }
 
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-card { background: var(--card-dark); padding: 15px; border-radius: 8px; text-align: center; border-bottom: 3px solid var(--insight-blue); }
         .stat-circle { width: 60px; height: 60px; border: 2px solid var(--insight-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 10px auto; color: var(--insight-blue); font-weight: bold; }
 
-        /* TIGHT FOOTER LAYOUT */
         .app-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding-top: 20px; border-top: 1px solid #222; }
-        
         .wipe-btn { background: #2a1111; color: var(--red); border: 1px solid var(--red); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; }
 
         .loggometer { width: 110px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
@@ -52,11 +54,8 @@
         .meter-needle { position: absolute; height: 100%; width: 4px; background: var(--accent-gold); left: 0%; transition: left 0.3s ease; }
 
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 420px; border: 1px solid #333; }
+        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 420px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
         .row-entry { display: grid; grid-template-columns: 100px 1fr 40px; gap: 10px; margin-bottom: 12px; align-items: center; }
-        
-        .ai-toggle-row { display: grid; grid-template-columns: 1fr 40px; gap: 10px; align-items: center; margin-top: 15px; }
-        
         select, input { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
         input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; justify-self: center; margin: 0; }
         .guest-input-container { min-height: 38px; display: flex; align-items: center; }
@@ -65,29 +64,29 @@
 <body>
 
     <div id="lock-screen">
-        <h2 style="color:var(--accent-gold); font-weight:300; letter-spacing:2px">ACCESS REQUIRED</h2>
-        <input type="password" id="pass-input" placeholder="Password">
+        <h1>GABONZOTAN</h1>
+        <div class="warning-msg">(If you're not Gabo or Nico, get the fuck out of here.)</div>
+        <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
         <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
+        <div class="version-tag">STABLE RELEASE v.1.4.2</div>
     </div>
 
     <div id="app-content">
         <button class="about-btn" onclick="alert('Catan Tracker for Bonzito and Gabito')">About</button>
         <h1>GaBonzoTan</h1>
-        <div class="version-tag">STABLE RELEASE v.1.3.5</div>
+        <div class="version-tag">STABLE RELEASE v.1.4.2</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
-            <button id="t-insights" class="tab-btn" onclick="switchTab('insights')">Player Insights</button>
-            <button id="t-ai" class="tab-btn" onclick="switchTab('ai')">AI Insights</button>
+            <button id="t-insights" class="tab-btn" onclick="switchTab('insights')">Player Stats</button>
+            <button id="t-ai" class="tab-btn" onclick="switchTab('ai')">AI Stats</button>
         </div>
 
         <button class="add-game-btn" onclick="openModal()">+ ADD NEW GAME</button>
-        
-        <div id="main-view">Connecting to Cloud...</div>
+        <div id="main-view">Connecting...</div>
 
         <div class="app-footer">
             <button class="wipe-btn" onclick="alert('Nice try!')">WIPE DATABASE</button>
-            
             <div class="loggometer" onclick="alert('RAAAAAAAR')">
                 <div style="font-size:8px; color:#666; text-align:center">LOGGOMETER™</div>
                 <div class="meter-dial"><div id="needle" class="meter-needle"></div></div>
@@ -98,22 +97,23 @@
 
     <div id="modal">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:var(--accent-gold)">Record Session</h3>
+            <h3 id="modal-title" style="margin-top:0; color:var(--accent-gold)">Record Session</h3>
+            <input type="hidden" id="editing-id">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px">
                 <input type="date" id="game-date">
                 <input type="number" id="winning-vp" placeholder="VP" value="10">
             </div>
             <div id="player-rows"></div>
-            <div class="ai-toggle-row">
+            <div style="display:grid; grid-template-columns:1fr 40px; gap:10px; align-items:center; margin-top:15px">
                 <span style="font-size: 14px; color: var(--text-dim);">Include AI Player</span>
                 <input type="checkbox" id="ai-toggle" onchange="toggleAIRow()">
             </div>
             <div id="ai-row" class="row-entry" style="display:none; margin-top:10px; color:var(--ai-purple)">
-                <span style="font-weight:bold">AI Bot</span><span></span><input type="radio" name="winner" value="AI">
+                <span style="font-weight:bold">AI Bot</span><span></span><input type="radio" name="winner" id="ai-win-radio" value="AI">
             </div>
             <div style="display:flex; gap:10px; margin-top:25px">
                 <button onclick="closeModal()" style="flex:1; background:#444; color:white; border:none; padding:12px; border-radius:4px; cursor:pointer">Cancel</button>
-                <button onclick="saveGame()" style="flex:1; background:var(--accent-gold); color:black; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer">Save Game</button>
+                <button onclick="saveGame()" style="flex:1; background:var(--accent-gold); color:black; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer">Save Changes</button>
             </div>
         </div>
     </div>
@@ -121,15 +121,12 @@
     <script>
         const SUPABASE_URL = 'https://xzqtltzfwddjqnnwxelw.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3PXww4EzHZcU468PyBRDvw_rzny7xRZ';
-
-        let supabaseClient;
-        let games = [];
-        let currentTab = 'history';
+        let supabaseClient, games = [], currentTab = 'history';
 
         window.checkPass = function() {
             if(document.getElementById('pass-input').value === "bowwow") {
                 document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('app-content').style.filter = 'none';
+                document.getElementById('app-content').style.display = 'block';
                 initSupabase();
             } else { alert("Unauthorized."); }
         };
@@ -149,30 +146,69 @@
             return `${d}-${m}-${y}`;
         }
 
+        window.editGame = function(id) {
+            const game = games.find(g => g.id === id);
+            openModal(true);
+            document.getElementById('modal-title').innerText = "Edit Session";
+            document.getElementById('editing-id').value = id;
+            document.getElementById('game-date').value = game.date;
+            document.getElementById('winning-vp').value = game.winningvp;
+            document.getElementById('ai-toggle').checked = game.aiplayed;
+            toggleAIRow();
+            if(game.winner === "AI") document.getElementById('ai-win-radio').checked = true;
+
+            const players = game.players.filter(p => p !== "AI");
+            for(let i=1; i<=6; i++) {
+                const pName = players[i-1] || "";
+                const sel = document.getElementById(`p${i}-sel`);
+                if(pName === "Nico" || pName === "Gabo") {
+                    sel.value = pName;
+                } else if (pName !== "") {
+                    sel.value = "Guest";
+                    const gInput = document.getElementById(`p${i}-name`);
+                    gInput.style.display = 'block';
+                    gInput.value = pName;
+                }
+                const winRadio = document.querySelector(`input[name="winner"][value="${i}"]`);
+                if(game.winner === pName && pName !== "") {
+                    winRadio.checked = true;
+                }
+            }
+        };
+
         window.saveGame = async function() {
             const winnerRadio = document.querySelector('input[name="winner"]:checked');
             if(!winnerRadio) { alert("Select a winner!"); return; }
-            const newGame = {
+            const editId = document.getElementById('editing-id').value;
+            
+            const gameData = {
                 date: document.getElementById('game-date').value,
                 winningvp: parseInt(document.getElementById('winning-vp').value) || 0,
                 aiplayed: document.getElementById('ai-toggle').checked,
                 players: [], winner: ""
             };
-            for(let i=1; i<=4; i++) {
+
+            for(let i=1; i<=6; i++) {
                 const sel = document.getElementById(`p${i}-sel`).value;
                 const guestName = document.getElementById(`p${i}-name`).value;
                 const finalName = sel === 'Guest' ? guestName : sel;
                 if(finalName) {
-                    newGame.players.push(finalName);
-                    if(winnerRadio.value == i) newGame.winner = finalName;
+                    gameData.players.push(finalName);
+                    if(winnerRadio.value == i) gameData.winner = finalName;
                 }
             }
-            if(newGame.aiplayed) {
-                newGame.players.push("AI");
-                if(winnerRadio.value === "AI") newGame.winner = "AI";
+            if(gameData.aiplayed) {
+                gameData.players.push("AI");
+                if(winnerRadio.value === "AI") gameData.winner = "AI";
             }
-            const { error } = await supabaseClient.from('games').insert([newGame]);
-            if(!error) { closeModal(); fetchGames(); }
+
+            let result;
+            if(editId) {
+                result = await supabaseClient.from('games').update(gameData).eq('id', editId);
+            } else {
+                result = await supabaseClient.from('games').insert([gameData]);
+            }
+            if(!result.error) { closeModal(); fetchGames(); }
         };
 
         window.removeGame = async function(id) {
@@ -183,48 +219,48 @@
             const view = document.getElementById('main-view');
             view.innerHTML = '';
             if(currentTab === 'history') {
-                if(games.length === 0) {
-                    view.innerHTML = '<p style="text-align:center; color:#555">Cloud is empty. Add a game to begin.</p>';
-                    return;
-                }
+                if(games.length === 0) { view.innerHTML = '<p style="text-align:center; color:#555">Empty.</p>'; return; }
                 games.forEach(g => {
                     const div = document.createElement('div');
                     div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
-                    div.innerHTML = `<button class="del-btn" onclick="removeGame(${g.id})">&times;</button>
+                    div.innerHTML = `
+                        <div class="actions">
+                            <button class="action-btn edit-btn" onclick="editGame(${g.id})">✎</button>
+                            <button class="action-btn del-btn" onclick="removeGame(${g.id})">&times;</button>
+                        </div>
                         <div style="font-size:12px; color:var(--text-dim); margin-bottom:8px">${formatDate(g.date)} • ${g.winningvp} VP</div>
                         <div>${g.players.map(p => `<span class="chip ${p===g.winner?'winner-chip':''}">${p}</span>`).join('')}</div>`;
                     view.appendChild(div);
                 });
             } else if (currentTab === 'insights') {
                 const allPlayers = [...new Set(games.flatMap(g => g.players))].filter(p => p !== 'AI').sort();
-                if(allPlayers.length === 0) { view.innerHTML = '<p style="text-align:center">No player data.</p>'; return; }
-                
                 let gridHTML = '<div class="stat-grid">';
                 allPlayers.forEach(p => {
                     const pGames = games.filter(g => g.players.includes(p));
                     const wins = pGames.filter(g => g.winner === p).length;
-                    gridHTML += `<div class="stat-card">
-                        <div style="font-weight:bold; color:var(--insight-blue); text-transform:uppercase; font-size:11px">${p}</div>
-                        <div class="stat-circle">${wins}</div>
-                        <div style="font-size:9px; color:var(--text-dim)">Wins / ${pGames.length} Games</div>
-                    </div>`;
+                    gridHTML += `<div class="stat-card"><div style="font-weight:bold; color:var(--insight-blue); text-transform:uppercase; font-size:11px">${p}</div><div class="stat-circle">${wins}</div><div style="font-size:9px; color:var(--text-dim)">Wins / ${pGames.length} Games</div></div>`;
                 });
-                gridHTML += '</div>';
-                view.innerHTML = gridHTML;
+                view.innerHTML = gridHTML + '</div>';
             } else if (currentTab === 'ai') {
                 const aiGames = games.filter(g => g.aiplayed);
                 const aiWins = aiGames.filter(g => g.winner === 'AI').length;
-                view.innerHTML = `<div class="history-item ai-win-card" style="text-align:center"><h2 style="color:var(--ai-purple)">AI Performance</h2><div class="stat-circle" style="border-color:var(--ai-purple); color:var(--ai-purple); height:80px; width:80px; font-size:28px">${aiWins}</div><p>Wins in ${aiGames.length} appearances</p></div>`;
+                view.innerHTML = `<div class="history-item ai-win-card" style="text-align:center"><h2 style="color:var(--ai-purple)">AI Performance</h2><div class="stat-circle" style="border-color:var(--ai-purple); color:var(--ai-purple); height:80px; width:80px; font-size:28px">${aiWins}</div><p>Wins in ${aiGames.length} games</p></div>`;
             }
         }
 
-        window.openModal = function() {
+        window.openModal = function(isEdit = false) {
             document.getElementById('modal').style.display = 'flex';
-            document.getElementById('game-date').valueAsDate = new Date();
-            document.getElementById('winning-vp').value = 10;
+            if(!isEdit) {
+                document.getElementById('modal-title').innerText = "Record Session";
+                document.getElementById('editing-id').value = "";
+                document.getElementById('game-date').valueAsDate = new Date();
+                document.getElementById('winning-vp').value = 10;
+                document.getElementById('ai-toggle').checked = false;
+                toggleAIRow();
+            }
             const rows = document.getElementById('player-rows');
             rows.innerHTML = '';
-            for(let i=1; i<=4; i++) {
+            for(let i=1; i<=6; i++) {
                 rows.innerHTML += `<div class="row-entry">
                     <select id="p${i}-sel" onchange="toggleGuestInput(${i})">
                         <option value="">- Empty -</option><option value="Nico">Nico</option><option value="Gabo">Gabo</option><option value="Guest">Guest...</option>
@@ -239,7 +275,6 @@
             const sel = document.getElementById(`p${idx}-sel`).value;
             document.getElementById(`p${idx}-name`).style.display = (sel === 'Guest' ? 'block' : 'none');
         };
-
         window.closeModal = () => document.getElementById('modal').style.display='none';
         window.toggleAIRow = () => document.getElementById('ai-row').style.display = document.getElementById('ai-toggle').checked ? 'grid' : 'none';
         window.switchTab = (t) => { currentTab = t; document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(t))); render(); };
@@ -252,3 +287,5 @@
             if(v) v.innerText = r.toFixed(1) + " % LOGGO";
         }, 1500);
     </script>
+</body>
+</html>
