@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.1</title>
+    <title>GaBonzoTan v.1.8.2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -68,6 +68,8 @@
         .row-entry { display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 12px; align-items: center; }
         select, input, textarea { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
         
+        .required-star { color: var(--red); font-weight: bold; margin-left: 2px; }
+
         #easter-egg-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 10000; cursor: pointer; }
         #easter-egg-overlay img { max-width: 90%; max-height: 80%; border: 2px solid var(--accent-gold); box-shadow: 0 0 20px var(--accent-gold); border-radius: 10px; }
 
@@ -92,7 +94,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.1</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.2</div>
     </div>
 
     <div id="app-content">
@@ -104,7 +106,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.1</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.2</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -139,20 +141,20 @@
             <input type="hidden" id="editing-id">
             <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin-bottom:15px">
                 <div>
-                    <label style="font-size:9px; color:#666">DATE</label>
+                    <label style="font-size:9px; color:#666">DATE<span class="required-star">*</span></label>
                     <input type="date" id="game-date">
                 </div>
                 <div>
-                    <label style="font-size:9px; color:#666">VP</label>
+                    <label style="font-size:9px; color:#666">VP<span class="required-star">*</span></label>
                     <input type="number" id="winning-vp" placeholder="VP" value="10">
                 </div>
                 <div>
-                    <label style="font-size:9px; color:#666">GAME #</label>
+                    <label style="font-size:9px; color:#666">GAME #<span class="required-star">*</span></label>
                     <input type="number" id="game-number" value="1" min="1">
                 </div>
             </div>
             <div style="margin-bottom: 15px;">
-                <label style="font-size:10px; color:#666; display:block; margin-bottom:4px">SELECT MAP</label>
+                <label style="font-size:10px; color:#666; display:block; margin-bottom:4px">SELECT MAP<span class="required-star">*</span></label>
                 <select id="game-map">
                     <option value="">(No Map Selected)</option>
                     <option value="The First Island">The First Island</option>
@@ -163,9 +165,9 @@
             </div>
             
             <div id="player-rows-header" style="display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 5px; align-items: center;">
-                <span style="font-size: 10px; color: #666; text-transform: uppercase;">Player</span>
+                <span style="font-size: 10px; color: #666; text-transform: uppercase;">Player<span class="required-star">*</span></span>
                 <span></span>
-                <span style="font-size: 10px; color: var(--accent-gold); text-transform: uppercase; text-align: center; font-weight: bold; white-space: nowrap;">Won By</span>
+                <span style="font-size: 10px; color: var(--accent-gold); text-transform: uppercase; text-align: center; font-weight: bold; white-space: nowrap;">Won By<span class="required-star">*</span></span>
             </div>
 
             <div id="player-rows"></div>
@@ -321,6 +323,14 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.2</div>
+                            <ul class="changelog-list">
+                                <li>Implemented mandatory field validation for game creation and editing.</li>
+                                <li>Added red asterisks to required fields (Map, Winner, Players, VP, Game #).</li>
+                                <li>Added error prompts for missing data or invalid game conditions.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.1</div>
                             <ul class="changelog-list">
@@ -599,24 +609,46 @@
 
         window.saveGame = async function() {
             updateSessionTimestamp();
+            
+            // Validation Checks
+            const gameMap = document.getElementById('game-map').value;
+            const gameVP = parseInt(document.getElementById('winning-vp').value);
+            const gameNum = document.getElementById('game-number').value;
             const winnerRadio = document.querySelector('input[name="winner"]:checked');
-            if(!winnerRadio) { alert("Select a winner!"); return; }
+            const isAIIncluded = document.getElementById('ai-toggle').checked;
+
+            if(!gameMap) { alert("Please select a Map."); return; }
+            if(!gameVP || gameVP <= 0) { alert("Winning VP must be greater than 0."); return; }
+            if(!gameNum) { alert("Please enter a Game Number."); return; }
+
             const editId = document.getElementById('editing-id').value;
             const gameData = { 
                 date: document.getElementById('game-date').value, 
-                winningvp: parseInt(document.getElementById('winning-vp').value) || 0,
-                game_number: parseInt(document.getElementById('game-number').value) || 1,
-                map_used: document.getElementById('game-map').value,
-                aiplayed: document.getElementById('ai-toggle').checked, 
+                winningvp: gameVP,
+                game_number: parseInt(gameNum) || 1,
+                map_used: gameMap,
+                aiplayed: isAIIncluded, 
                 players: [], winner: "", notes: document.getElementById('game-notes').value.trim(),
                 logged_by: currentUser, logged_at: new Date().toISOString()
             };
+
             for(let i=1; i<=6; i++) {
                 const sel = document.getElementById(`p${i}-sel`).value;
-                const finalName = sel === 'Guest' ? document.getElementById(`p${i}-name`).value : sel;
-                if(finalName) { gameData.players.push(finalName); if(winnerRadio.value == i) gameData.winner = finalName; }
+                const finalName = sel === 'Guest' ? document.getElementById(`p${i}-name`).value.trim() : sel;
+                if(finalName) { 
+                    gameData.players.push(finalName); 
+                    if(winnerRadio && winnerRadio.value == i) gameData.winner = finalName; 
+                }
             }
-            if(gameData.aiplayed) { gameData.players.push("AI"); if(winnerRadio.value === "AI") gameData.winner = "AI"; }
+            if(isAIIncluded) { 
+                gameData.players.push("AI"); 
+                if(winnerRadio && winnerRadio.value === "AI") gameData.winner = "AI"; 
+            }
+
+            // Validation: Winner and Player Count
+            if(gameData.players.length < 2) { alert("At least two players are required (AI counts)."); return; }
+            if(!gameData.winner) { alert("Please select which player won the game."); return; }
+
             try {
                 if(editId) { await supabaseClient.from('games').update(gameData).eq('id', editId); } 
                 else { await supabaseClient.from('games').insert([gameData]); }
