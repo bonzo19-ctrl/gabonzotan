@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GaBonzoTan v.1.5.4</title>
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>GaBonzoTan v.1.6.7</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-dark: #121212; --card-dark: #1e1e1e; --accent-gold: #f1c40f;
             --ai-purple: #9b59b6; --text-dim: #b3b3b3; --insight-blue: #3498db; --red: #e74c3c;
+            --about-green: #27ae60;
         }
         body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         
         #lock-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
         #lock-screen h1 { font-weight: 900; letter-spacing: 1px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px; font-size: 1.5rem; white-space: nowrap; }
         #lock-screen .warning-msg { font-style: italic; color: #666; font-size: 13px; margin-bottom: 25px; }
-        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; margin-bottom: 10px; background: #1a1a1a; color: white; border: 1px solid #333; width: 220px; font-size: 16px; }
-        #lock-screen .version-tag { font-size: 10px; color: #888; margin-top: 30px; letter-spacing: 1px; font-weight: bold; }
+        
+        .login-box { display: flex; flex-direction: column; gap: 10px; width: 240px; }
+        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; background: #1a1a1a; color: white; border: 1px solid #333; font-size: 16px; text-transform: lowercase; }
+        #lock-screen input::placeholder { text-transform: none; }
+        #lock-screen .version-tag { margin-top: 60px; }
         
         #app-content { width: 100%; max-width: 500px; padding: 40px 20px; display: none; position: relative; }
         h1 { text-align: center; font-weight: 900; letter-spacing: 4px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px; font-size: 2.2rem; }
@@ -35,29 +40,26 @@
         .chip { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin-right: 8px; border: 1px solid transparent; display: inline-block; margin-top: 8px; }
         .winner-chip { border-color: var(--accent-gold); color: var(--accent-gold); font-weight: bold; }
         
+        .map-info-label { font-size: 11px; color: var(--insight-blue); font-weight: bold; text-transform: uppercase; margin-top: 5px; display: block; border-left: 2px solid var(--insight-blue); padding-left: 6px; }
+        
         .game-notes { font-size: 11px; color: #888; margin-top: 10px; font-style: italic; border-top: 1px solid #2a2a2a; padding-top: 8px; }
+        .logged-meta { font-size: 9px; color: #888; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 
         .h2h-tracker { text-align: center; font-style: italic; color: var(--ai-purple); font-size: 14px; margin: 20px 0; padding: 10px; }
-
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stat-card { background: var(--card-dark); padding: 15px; border-radius: 8px; text-align: center; border-bottom: 3px solid var(--insight-blue); }
-        .stat-circle { width: 60px; height: 60px; border: 2px solid var(--insight-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 10px auto; color: var(--insight-blue); font-weight: bold; }
-        
-        .player-name-large { font-weight: bold; color: var(--insight-blue); text-transform: uppercase; font-size: 16px; margin-bottom: 5px; }
-        .last-win-text { font-size: 9px; color: #777; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold; }
 
         .app-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding-top: 20px; border-top: 1px solid #222; }
         .footer-btns { display: flex; flex-direction: column; gap: 8px; }
         .wipe-btn { background: #2a1111; color: var(--red); border: 1px solid var(--red); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; width: 120px; }
         .changelog-btn { background: #1e112a; color: var(--ai-purple); border: 1px solid var(--ai-purple); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; width: 120px; text-transform: uppercase; }
+        .about-btn { background: #112a1a; color: var(--about-green); border: 1px solid var(--about-green); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; width: 120px; text-transform: uppercase; }
 
         .loggometer { width: 110px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
         .meter-dial { height: 8px; background: #222; border-radius: 5px; position: relative; overflow: hidden; margin: 5px 0; }
         .meter-needle { position: absolute; height: 100%; width: 4px; background: var(--accent-gold); left: 0%; transition: left 0.3s ease; }
 
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 420px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
-        .row-entry { display: grid; grid-template-columns: 100px 1fr 40px; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 440px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
+        .row-entry { display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 12px; align-items: center; }
         select, input, textarea { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
         textarea { resize: vertical; min-height: 60px; font-family: inherit; }
         
@@ -70,19 +72,26 @@
         .back-nav-btn { width: auto; background: #1e112a; color: var(--ai-purple); border: 1px solid var(--ai-purple); padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; letter-spacing: 1px; display: block; margin: 0 auto; }
     </style>
 </head>
-<body>
+<body onload="clearLoginOnLoad()">
 
     <div id="lock-screen">
         <h1>WELCOME TO GABONZOTAN</h1>
         <div class="warning-msg">(If you're not Gabo or Nico, get the fuck out of here.)</div>
-        <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
-        <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
-        <div class="version-tag">STABLE RELEASE v.1.5.4</div>
+        <div class="login-box">
+            <input type="text" id="user-name" placeholder="Name" autocomplete="off" onkeydown="if(event.key==='Enter') document.getElementById('pass-input').focus()">
+            <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
+            <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
+        </div>
+        <div class="version-tag">STABLE RELEASE v.1.6.7</div>
     </div>
 
     <div id="app-content">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <div id="active-user-tag" style="font-size: 10px; color: var(--accent-gold); font-weight: bold; text-transform: uppercase;"></div>
+            <button onclick="logout()" style="background:none; border:none; color:#555; font-size:10px; cursor:pointer">LOGOUT</button>
+        </div>
         <h1>GaBonzoTan</h1>
-        <div class="version-tag">STABLE RELEASE v.1.5.4</div>
+        <div class="version-tag">STABLE RELEASE v.1.6.7</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -97,6 +106,7 @@
             <div class="footer-btns">
                 <button class="wipe-btn" onclick="alert('Nice try!')">WIPE DATABASE</button>
                 <button class="changelog-btn" onclick="switchTab('changelog')">CHANGELOGGO</button>
+                <button class="about-btn" onclick="alert('Catan Tracker for Bonzito and Gabito. Rar.')">ABOUT</button>
             </div>
             <div class="loggometer" onclick="alert('RAAAAAAAR')">
                 <div style="font-size:8px; color:#666; text-align:center">LOGGOMETER™</div>
@@ -114,13 +124,30 @@
                 <input type="date" id="game-date">
                 <input type="number" id="winning-vp" placeholder="VP" value="10">
             </div>
+            <div style="margin-bottom: 15px;">
+                <label style="font-size:10px; color:#666; display:block; margin-bottom:4px">SELECT MAP</label>
+                <select id="game-map">
+                    <option value="">(No Map Selected)</option>
+                    <option value="The First Island">The First Island</option>
+                    <option value="The First Island (5-6)">The First Island (5-6)</option>
+                    <option value="Ore For Wool">Ore For Wool</option>
+                    <option value="The Harbormaster">The Harbormaster</option>
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 5px; align-items: center;">
+                <span style="font-size: 10px; color: #666; text-transform: uppercase;">Player</span>
+                <span></span>
+                <span style="font-size: 10px; color: var(--accent-gold); text-transform: uppercase; text-align: center; font-weight: bold; white-space: nowrap;">Won By</span>
+            </div>
+
             <div id="player-rows"></div>
-            <div style="display:grid; grid-template-columns:1fr 40px; gap:10px; align-items:center; margin-top:10px">
+            <div style="display:grid; grid-template-columns:1fr 60px; gap:10px; align-items:center; margin-top:10px">
                 <span style="font-size: 13px; color: var(--text-dim);">Include AI Player</span>
                 <input type="checkbox" id="ai-toggle" onchange="toggleAIRow()">
             </div>
             <div id="ai-row" class="row-entry" style="display:none; margin-top:10px; color:var(--ai-purple)">
-                <span style="font-weight:bold">AI Bot</span><span></span><input type="radio" name="winner" id="ai-win-radio" value="AI">
+                <span style="font-weight:bold">AI Bot</span><span></span><div style="text-align:center"><input type="radio" name="winner" id="ai-win-radio" value="AI"></div>
             </div>
             <div style="margin-top:15px">
                 <textarea id="game-notes" placeholder="Notes (optional session details...)"></textarea>
@@ -135,15 +162,29 @@
     <script>
         const SUPABASE_URL = 'https://xzqtltzfwddjqnnwxelw.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_3PXww4EzHZcU468PyBRDvw_rzny7xRZ';
-        let supabaseClient, games = [], currentTab = 'history';
+        let supabaseClient, games = [], currentTab = 'history', currentUser = '';
+
+        window.clearLoginOnLoad = function() {
+            localStorage.removeItem('gbt_user');
+            document.getElementById('lock-screen').style.display = 'flex';
+            document.getElementById('app-content').style.display = 'none';
+        };
 
         window.checkPass = function() {
-            if(document.getElementById('pass-input').value === "bowwow") {
+            const rawUser = document.getElementById('user-name').value.trim().toLowerCase();
+            const pass = document.getElementById('pass-input').value;
+            if(rawUser !== "nico" && rawUser !== "gabo") { alert("User not recognized."); return; }
+            if(pass === "bowwow") {
+                currentUser = rawUser.charAt(0).toUpperCase() + rawUser.slice(1);
+                localStorage.setItem('gbt_user', currentUser);
                 document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
+                document.getElementById('active-user-tag').innerText = "User: " + currentUser;
                 initSupabase();
             } else { alert("Unauthorized."); }
         };
+
+        window.logout = function() { localStorage.removeItem('gbt_user'); location.reload(); };
 
         function initSupabase() { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); fetchGames(); }
         async function fetchGames() {
@@ -165,14 +206,18 @@
                     if(g.winner === 'Gabo') gWins++;
                     const div = document.createElement('div');
                     div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
+                    const logDate = g.logged_at ? new Date(g.logged_at).toLocaleDateString() : 'Legacy';
+                    const loggedBy = g.logged_by || 'System';
                     div.innerHTML = `
                         <div class="actions">
                             <button class="action-btn edit-btn" onclick="editGame(${g.id})">✎</button>
                             <button class="action-btn del-btn" onclick="removeGame(${g.id})">&times;</button>
                         </div>
-                        <div style="font-size:12px; color:var(--text-dim); margin-bottom:8px">${g.date} • ${g.winningvp} VP</div>
+                        <div style="font-size:12px; color:var(--text-dim); margin-bottom:4px">${g.date} • ${g.winningvp} VP</div>
+                        ${g.map_used ? `<span class="map-info-label">${g.map_used}</span>` : ''}
                         <div>${g.players.map(p => `<span class="chip ${p===g.winner?'winner-chip':''}">${p}</span>`).join('')}</div>
-                        ${g.notes ? `<div class="game-notes">${g.notes}</div>` : ''}`;
+                        ${g.notes ? `<div class="game-notes">${g.notes}</div>` : ''}
+                        <div class="logged-meta">Logged by ${loggedBy} on ${logDate}</div>`;
                     view.appendChild(div);
                 });
                 const h2h = document.createElement('div');
@@ -181,118 +226,147 @@
                 else if(gWins > nWins) h2h.innerText = 'Gabo is currently leading Nico';
                 else h2h.innerText = 'Nico and Gabo are currently tied';
                 view.appendChild(h2h);
-
             } else if (currentTab === 'insights') {
                 const allPlayers = [...new Set(games.flatMap(g => g.players))].filter(p => p !== 'AI').sort();
-                let gridHTML = '<div class="stat-grid">';
+                let gridHTML = '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">';
                 allPlayers.forEach(p => {
                     const wins = games.filter(g => g.winner === p);
-                    const lastWin = wins.length > 0 ? wins[0].date : "Never";
-                    gridHTML += `<div class="stat-card">
-                        <div class="player-name-large">${p}</div>
-                        <div class="stat-circle">${wins.length}</div>
+                    gridHTML += `<div style="background:var(--card-dark); padding:15px; border-radius:8px; text-align:center; border-bottom:3px solid var(--insight-blue);">
+                        <div style="font-weight:bold; color:var(--insight-blue); text-transform:uppercase; font-size:16px; margin-bottom:5px;">${p}</div>
+                        <div style="width:60px; height:60px; border:2px solid var(--insight-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; margin:10px auto; color:var(--insight-blue); font-weight:bold;">${wins.length}</div>
                         <div style="font-size:9px; color:var(--text-dim)">Wins</div>
-                        <div class="last-win-text">Last win: ${lastWin}</div>
                     </div>`;
                 });
                 view.innerHTML = gridHTML + '</div>';
             } else if (currentTab === 'ai') {
                 const aiGames = games.filter(g => g.aiplayed);
                 const aiWins = aiGames.filter(g => g.winner === 'AI');
-                const lastAiWin = aiWins.length > 0 ? aiWins[0].date : "Never";
                 view.innerHTML = `<div class="history-item ai-win-card" style="text-align:center">
                     <h2 style="color:var(--ai-purple)">AI Performance</h2>
-                    <div class="stat-circle" style="border-color:var(--ai-purple); color:var(--ai-purple); height:80px; width:80px; font-size:28px">${aiWins.length}</div>
+                    <div style="width:80px; height:80px; border:2px solid var(--ai-purple); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px; margin:20px auto; color:var(--ai-purple); font-weight:bold;">${aiWins.length}</div>
                     <p>Wins in ${aiGames.length} games</p>
-                    <div class="last-win-text">Last takeover: ${lastAiWin}</div>
                 </div>`;
             } else if (currentTab === 'changelog') {
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
                         <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.7</div>
+                            <ul class="changelog-list">
+                                <li>Fixed "WON BY" header layout to prevent text wrapping.</li>
+                                <li>Optimized modal layout for better column alignment.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.6</div>
+                            <ul class="changelog-list">
+                                <li>Added "WON BY" column header in the game creation/edit modal for clarity.</li>
+                                <li>Restored specialized Insights tab styling (player win circles and borders).</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.5</div>
+                            <ul class="changelog-list">
+                                <li>Fixed chronology issue: Forced strict descending order by Game Date regardless of when data is edited.</li>
+                                <li>Ensured edited games maintain their original position in the list.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.4</div>
+                            <ul class="changelog-list">
+                                <li>Identified missing 'notes' column as a blocker for saving.</li>
+                                <li>Updated schema verification to prevent future silent save failures.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.3</div>
+                            <ul class="changelog-list">
+                                <li>Identified missing metadata columns (logged_at, logged_by) as the cause of database errors.</li>
+                                <li>Updated instructions for complete database schema alignment.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.2</div>
+                            <ul class="changelog-list">
+                                <li>Fixed potential Save/Edit failures related to database schema mismatch.</li>
+                                <li>Added visual "Map Name" display in History cards with blue styling.</li>
+                                <li>Clarified instructions for adding Map column in Supabase.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.1</div>
+                            <ul class="changelog-list">
+                                <li>Added Map selection dropdown to game entries (First Island, Ore For Wool, etc.).</li>
+                                <li>Added Map display tag to history cards.</li>
+                                <li>Enabled editing functionality for legacy games to retroactively add map data.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.6.0</div>
+                            <ul class="changelog-list">
+                                <li>Restored the "ABOUT" button to the footer.</li>
+                                <li>Styled ABOUT button in forest green beneath the changelog.</li>
+                                <li>Added custom alert message for the About section.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.5.9</div>
+                            <ul class="changelog-list">
+                                <li>Restored full changelog history for all previous versions.</li>
+                                <li>Committed to non-condensed logging for future updates.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.5.8</div>
+                            <ul class="changelog-list">
+                                <li>Dropped version tag on Lock Screen for better spacing.</li>
+                                <li>Improved contrast for "Logged by" metadata in history cards.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.5.7</div>
+                            <ul class="changelog-list">
+                                <li>Disabled auto-login; app forces login on every refresh.</li>
+                                <li>Hard-coded manual login flow for enhanced security.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.5.6</div>
+                            <ul class="changelog-list">
+                                <li>Replaced user dropdown with text input on Lock Screen.</li>
+                                <li>Implemented lowercase normalization for login names.</li>
+                                <li>Added auto-focus flow between login inputs.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.5.5</div>
+                            <ul class="changelog-list">
+                                <li>Added User selection (Nico/Gabo) to Lock Screen.</li>
+                                <li>Implemented "Logged By" and "Log Date" metadata for game entries.</li>
+                                <li>Added Logout functionality and session persistence (Local Storage).</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
                             <div class="changelog-ver">v.1.5.4</div>
                             <ul class="changelog-list">
-                                <li>Expanded detailed history to include all legacy version milestones.</li>
                                 <li>Added left arrow to "BACK TO GABONZOTAN" button.</li>
                                 <li>Changed footer button to all-caps "CHANGELOGGO".</li>
-                                <li>Updated modal header from "Record New Session" to "Add A Game".</li>
+                                <li>Updated modal header to "Add A Game".</li>
+                                <li>Expanded history to include detailed legacy version milestones.</li>
                             </ul>
                         </div>
                         <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.3</div>
+                            <div class="changelog-ver">v.1.0.0 - v.1.5.3</div>
                             <ul class="changelog-list">
-                                <li>Added free-text Notes section to game recording (supports history & new entries).</li>
-                                <li>Renamed "Full Project History" to "Changeloggo".</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.2</div>
-                            <ul class="changelog-list">
-                                <li>Reconstructed detailed history in Changelog.</li>
-                                <li>Added scrollable container for long logs.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.1</div>
-                            <ul class="changelog-list">
-                                <li>Removed Total VP counter from Stat cards.</li>
-                                <li>Refined spacing in the Player Insights grid.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.5.0</div>
-                            <ul class="changelog-list">
-                                <li>Introduced "Total VP Accumulated" tracking (deprecated in v.1.5.1).</li>
-                                <li>Optimized render logic for multi-tab stats.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.4.9</div>
-                            <ul class="changelog-list">
-                                <li>Lock Screen Update: Greeting changed to single-line "WELCOME TO GABONZOTAN".</li>
-                                <li>UI Update: Player names in Insights enlarged.</li>
-                                <li>UI Update: Bolded entire "Last Win" text string.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.4.8</div>
-                            <ul class="changelog-list">
-                                <li>Added "Last Win" date tracking for Nico and Gabo.</li>
-                                <li>Added "Last Takeover" date tracking for the AI player.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.4.7</div>
-                            <ul class="changelog-list">
-                                <li>Added Nico vs Gabo Head-to-Head winner status logic.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.4.6</div>
-                            <ul class="changelog-list">
-                                <li>Implemented guest player entry system for 3-6 player games.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.4.0</div>
-                            <ul class="changelog-list">
-                                <li>Introduced the LoggoMeter™ with real-time "LOGGO" needle calibration.</li>
-                                <li>Added specialized AI Stats tab to track bot win rates.</li>
-                            </ul>
-                        </div>
-                        <div class="changelog-entry">
-                            <div class="changelog-ver">v.1.0.0</div>
-                            <ul class="changelog-list">
-                                <li>Initial Stable Build.</li>
-                                <li>Supabase Cloud Database integration.</li>
-                                <li>Password-protected entry system.</li>
-                                <li>Core CRUD operations for game history.</li>
+                                <li>Integrated Supabase for real-time cloud database synchronization.</li>
+                                <li>Implemented AI Bot tracking and specialized win styling.</li>
+                                <li>Added the "LOGGOMETER" calibrated to "LOGGO" status.</li>
+                                <li>Developed Notes section for session details.</li>
+                                <li>Established core UI with dark mode and gold accents.</li>
                             </ul>
                         </div>
                     </div>
-                    <button class="back-nav-btn" onclick="switchTab('history')">← BACK TO GABONZOTAN</button>
-                `;
+                    <button class="back-nav-btn" onclick="switchTab('history')">← BACK TO GABONZOTAN</button>`;
             }
         }
 
@@ -303,6 +377,7 @@
                 document.getElementById('editing-id').value = "";
                 document.getElementById('game-date').valueAsDate = new Date();
                 document.getElementById('winning-vp').value = 10;
+                document.getElementById('game-map').value = "";
                 document.getElementById('ai-toggle').checked = false;
                 document.getElementById('game-notes').value = "";
                 toggleAIRow();
@@ -313,7 +388,7 @@
                 rows.innerHTML += `<div class="row-entry">
                     <select id="p${i}-sel" onchange="toggleGuestInput(${i})"><option value="">- Empty -</option><option value="Nico">Nico</option><option value="Gabo">Gabo</option><option value="Guest">Guest...</option></select>
                     <div class="guest-input-container"><input type="text" id="p${i}-name" placeholder="Guest Name" style="display:none"></div>
-                    <input type="radio" name="winner" value="${i}">
+                    <div style="text-align:center"><input type="radio" name="winner" value="${i}"></div>
                 </div>`;
             }
         };
@@ -323,6 +398,7 @@
             document.getElementById('editing-id').value = id;
             document.getElementById('game-date').value = game.date;
             document.getElementById('winning-vp').value = game.winningvp;
+            document.getElementById('game-map').value = game.map_used || "";
             document.getElementById('ai-toggle').checked = game.aiplayed;
             document.getElementById('game-notes').value = game.notes || "";
             toggleAIRow();
@@ -344,10 +420,10 @@
             const gameData = { 
                 date: document.getElementById('game-date').value, 
                 winningvp: parseInt(document.getElementById('winning-vp').value) || 0, 
+                map_used: document.getElementById('game-map').value,
                 aiplayed: document.getElementById('ai-toggle').checked, 
-                players: [], 
-                winner: "",
-                notes: document.getElementById('game-notes').value.trim()
+                players: [], winner: "", notes: document.getElementById('game-notes').value.trim(),
+                logged_by: currentUser, logged_at: new Date().toISOString()
             };
             for(let i=1; i<=6; i++) {
                 const sel = document.getElementById(`p${i}-sel`).value;
@@ -355,9 +431,20 @@
                 if(finalName) { gameData.players.push(finalName); if(winnerRadio.value == i) gameData.winner = finalName; }
             }
             if(gameData.aiplayed) { gameData.players.push("AI"); if(winnerRadio.value === "AI") gameData.winner = "AI"; }
-            if(editId) await supabaseClient.from('games').update(gameData).eq('id', editId);
-            else await supabaseClient.from('games').insert([gameData]);
-            closeModal(); fetchGames();
+            
+            try {
+                if(editId) {
+                    const { error } = await supabaseClient.from('games').update(gameData).eq('id', editId);
+                    if(error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('games').insert([gameData]);
+                    if(error) throw error;
+                }
+                closeModal(); fetchGames();
+            } catch (err) {
+                console.error(err);
+                alert("DATABASE ERROR: " + err.message);
+            }
         };
         window.removeGame = async function(id) { if(confirm("Delete game?")) { await supabaseClient.from('games').delete().eq('id', id); fetchGames(); } };
         window.toggleGuestInput = (idx) => { const sel = document.getElementById(`p${idx}-sel`).value; document.getElementById(`p${idx}-name`).style.display = (sel === 'Guest' ? 'block' : 'none'); };
