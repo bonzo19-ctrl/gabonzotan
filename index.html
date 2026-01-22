@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GaBonzoTan v.1.3.0</title>
+    <title>GaBonzoTan v.1.3.5</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -15,12 +15,12 @@
         #lock-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
         #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; margin-bottom: 10px; background: #222; color: white; border: 1px solid #444; width: 200px; }
         
-        #app-content { width: 100%; max-width: 600px; padding: 40px 20px; filter: blur(10px); transition: filter 0.5s ease; position: relative; }
+        #app-content { width: 100%; max-width: 500px; padding: 40px 20px; filter: blur(10px); transition: filter 0.5s ease; position: relative; }
         
         .about-btn { position: absolute; top: 20px; right: 20px; background: none; border: 1px solid #444; color: #666; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; text-transform: uppercase; }
         .about-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
 
-        h1 { text-align: center; font-weight: 300; letter-spacing: 4px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 10px; }
+        h1 { text-align: center; font-weight: 900; letter-spacing: 4px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 5px; font-size: 2.2rem; }
         .version-tag { text-align: center; font-size: 10px; color: #555; margin-bottom: 30px; letter-spacing: 1px; }
         
         .nav-tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -38,19 +38,28 @@
         .chip { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 13px; margin-right: 5px; border: 1px solid transparent; display: inline-block; margin-top: 5px; }
         .winner-chip { border-color: var(--accent-gold); color: var(--accent-gold); font-weight: bold; }
 
-        .stat-circle { width: 80px; height: 80px; border: 3px solid var(--insight-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 15px auto; color: var(--insight-blue); font-weight: bold; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-card { background: var(--card-dark); padding: 15px; border-radius: 8px; text-align: center; border-bottom: 3px solid var(--insight-blue); }
+        .stat-circle { width: 60px; height: 60px; border: 2px solid var(--insight-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 10px auto; color: var(--insight-blue); font-weight: bold; }
 
-        .loggometer { position: fixed; bottom: 20px; right: 20px; width: 120px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-        .meter-dial { height: 10px; background: #222; border-radius: 5px; position: relative; overflow: hidden; margin: 5px 0; }
+        /* TIGHT FOOTER LAYOUT */
+        .app-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding-top: 20px; border-top: 1px solid #222; }
+        
+        .wipe-btn { background: #2a1111; color: var(--red); border: 1px solid var(--red); padding: 8px 12px; border-radius: 6px; font-size: 9px; cursor: pointer; letter-spacing: 1px; }
+
+        .loggometer { width: 110px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
+        .meter-dial { height: 8px; background: #222; border-radius: 5px; position: relative; overflow: hidden; margin: 5px 0; }
         .meter-needle { position: absolute; height: 100%; width: 4px; background: var(--accent-gold); left: 0%; transition: left 0.3s ease; }
 
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid #333; }
-        .row-entry { display: grid; grid-template-columns: 1.5fr 1.5fr 40px; gap: 8px; margin-bottom: 10px; align-items: center; }
-        select, input { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 420px; border: 1px solid #333; }
+        .row-entry { display: grid; grid-template-columns: 100px 1fr 40px; gap: 10px; margin-bottom: 12px; align-items: center; }
         
-        .danger-zone { margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; text-align: center; }
-        .wipe-btn { background: #2a1111; color: var(--red); border: 1px solid var(--red); padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .ai-toggle-row { display: grid; grid-template-columns: 1fr 40px; gap: 10px; align-items: center; margin-top: 15px; }
+        
+        select, input { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
+        input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; justify-self: center; margin: 0; }
+        .guest-input-container { min-height: 38px; display: flex; align-items: center; }
     </style>
 </head>
 <body>
@@ -64,7 +73,7 @@
     <div id="app-content">
         <button class="about-btn" onclick="alert('Catan Tracker for Bonzito and Gabito')">About</button>
         <h1>GaBonzoTan</h1>
-        <div class="version-tag">STABLE RELEASE v.1.3.0</div>
+        <div class="version-tag">STABLE RELEASE v.1.3.5</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -73,32 +82,38 @@
         </div>
 
         <button class="add-game-btn" onclick="openModal()">+ ADD NEW GAME</button>
+        
         <div id="main-view">Connecting to Cloud...</div>
 
-        <div class="loggometer">
-            <div style="font-size:9px; color:#666; text-align:center">LOGGOMETER™</div>
-            <div class="meter-dial"><div id="needle" class="meter-needle"></div></div>
-            <div id="meter-val" style="font-size:10px; color:#aaa; text-align:center; font-family:monospace">0.0% LOGGO</div>
+        <div class="app-footer">
+            <button class="wipe-btn" onclick="alert('Nice try!')">WIPE DATABASE</button>
+            
+            <div class="loggometer" onclick="alert('RAAAAAAAR')">
+                <div style="font-size:8px; color:#666; text-align:center">LOGGOMETER™</div>
+                <div class="meter-dial"><div id="needle" class="meter-needle"></div></div>
+                <div id="meter-val" style="font-size:9px; color:#aaa; text-align:center; font-family:monospace">0.0% LOGGO</div>
+            </div>
         </div>
     </div>
 
     <div id="modal">
         <div class="modal-content">
             <h3 style="margin-top:0; color:var(--accent-gold)">Record Session</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px">
                 <input type="date" id="game-date">
-                <input type="number" id="winning-vp" placeholder="VP">
+                <input type="number" id="winning-vp" placeholder="VP" value="10">
             </div>
             <div id="player-rows"></div>
-            <div style="margin-top:10px; font-size:14px">
-                <input type="checkbox" id="ai-toggle" onchange="toggleAIRow()"> Include AI Player
+            <div class="ai-toggle-row">
+                <span style="font-size: 14px; color: var(--text-dim);">Include AI Player</span>
+                <input type="checkbox" id="ai-toggle" onchange="toggleAIRow()">
             </div>
             <div id="ai-row" class="row-entry" style="display:none; margin-top:10px; color:var(--ai-purple)">
                 <span style="font-weight:bold">AI Bot</span><span></span><input type="radio" name="winner" value="AI">
             </div>
-            <div style="display:flex; gap:10px; margin-top:20px">
-                <button onclick="closeModal()" style="flex:1; background:#444; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer">Cancel</button>
-                <button onclick="saveGame()" style="flex:1; background:var(--accent-gold); color:black; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer">Save Game</button>
+            <div style="display:flex; gap:10px; margin-top:25px">
+                <button onclick="closeModal()" style="flex:1; background:#444; color:white; border:none; padding:12px; border-radius:4px; cursor:pointer">Cancel</button>
+                <button onclick="saveGame()" style="flex:1; background:var(--accent-gold); color:black; border:none; padding:12px; border-radius:4px; font-weight:bold; cursor:pointer">Save Game</button>
             </div>
         </div>
     </div>
@@ -127,6 +142,11 @@
         async function fetchGames() {
             const { data, error } = await supabaseClient.from('games').select('*').order('date', { ascending: false });
             if (!error) { games = data || []; render(); }
+        }
+
+        function formatDate(dStr) {
+            const [y, m, d] = dStr.split('-');
+            return `${d}-${m}-${y}`;
         }
 
         window.saveGame = async function() {
@@ -171,41 +191,55 @@
                     const div = document.createElement('div');
                     div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
                     div.innerHTML = `<button class="del-btn" onclick="removeGame(${g.id})">&times;</button>
-                        <div style="font-size:12px; color:var(--text-dim); margin-bottom:8px">${g.date} • ${g.winningvp} VP</div>
+                        <div style="font-size:12px; color:var(--text-dim); margin-bottom:8px">${formatDate(g.date)} • ${g.winningvp} VP</div>
                         <div>${g.players.map(p => `<span class="chip ${p===g.winner?'winner-chip':''}">${p}</span>`).join('')}</div>`;
                     view.appendChild(div);
                 });
             } else if (currentTab === 'insights') {
-                const allPlayers = [...new Set(games.flatMap(g => g.players))].sort();
+                const allPlayers = [...new Set(games.flatMap(g => g.players))].filter(p => p !== 'AI').sort();
                 if(allPlayers.length === 0) { view.innerHTML = '<p style="text-align:center">No player data.</p>'; return; }
-                view.innerHTML = `<select id="ins-p" onchange="renderPlayerStats()">${allPlayers.map(p => `<option value="${p}">${p}</option>`).join('')}</select><div id="ins-result"></div>`;
-                renderPlayerStats();
+                
+                let gridHTML = '<div class="stat-grid">';
+                allPlayers.forEach(p => {
+                    const pGames = games.filter(g => g.players.includes(p));
+                    const wins = pGames.filter(g => g.winner === p).length;
+                    gridHTML += `<div class="stat-card">
+                        <div style="font-weight:bold; color:var(--insight-blue); text-transform:uppercase; font-size:11px">${p}</div>
+                        <div class="stat-circle">${wins}</div>
+                        <div style="font-size:9px; color:var(--text-dim)">Wins / ${pGames.length} Games</div>
+                    </div>`;
+                });
+                gridHTML += '</div>';
+                view.innerHTML = gridHTML;
             } else if (currentTab === 'ai') {
                 const aiGames = games.filter(g => g.aiplayed);
                 const aiWins = aiGames.filter(g => g.winner === 'AI').length;
-                view.innerHTML = `<div class="history-item ai-win-card" style="text-align:center"><h2 style="color:var(--ai-purple)">AI Performance</h2><div class="stat-circle" style="border-color:var(--ai-purple); color:var(--ai-purple)">${aiWins}</div><p>Wins in ${aiGames.length} appearances</p></div>
-                <div class="danger-zone"><button class="wipe-btn" onclick="alert('Nice try!')">WIPE DATABASE</button></div>`;
+                view.innerHTML = `<div class="history-item ai-win-card" style="text-align:center"><h2 style="color:var(--ai-purple)">AI Performance</h2><div class="stat-circle" style="border-color:var(--ai-purple); color:var(--ai-purple); height:80px; width:80px; font-size:28px">${aiWins}</div><p>Wins in ${aiGames.length} appearances</p></div>`;
             }
         }
-
-        window.renderPlayerStats = function() {
-            const p = document.getElementById('ins-p').value;
-            const pGames = games.filter(g => g.players.includes(p));
-            const wins = pGames.filter(g => g.winner === p).length;
-            document.getElementById('ins-result').innerHTML = `<div class="history-item" style="text-align:center"><h2 style="color:var(--insight-blue); margin:0">${p}</h2><div class="stat-circle">${wins}</div><p>Wins in ${pGames.length} games</p></div>`;
-        };
 
         window.openModal = function() {
             document.getElementById('modal').style.display = 'flex';
             document.getElementById('game-date').valueAsDate = new Date();
+            document.getElementById('winning-vp').value = 10;
             const rows = document.getElementById('player-rows');
             rows.innerHTML = '';
             for(let i=1; i<=4; i++) {
-                rows.innerHTML += `<div class="row-entry"><select id="p${i}-sel" onchange="document.getElementById('p${i}-name').style.display=(this.value=='Guest'?'block':'none')">
-                    <option value="">- Empty -</option><option value="Nico">Nico</option><option value="Gabo">Gabo</option><option value="Guest">Guest...</option></select>
-                    <input type="text" id="p${i}-name" placeholder="Name" style="display:none"><div></div><input type="radio" name="winner" value="${i}"></div>`;
+                rows.innerHTML += `<div class="row-entry">
+                    <select id="p${i}-sel" onchange="toggleGuestInput(${i})">
+                        <option value="">- Empty -</option><option value="Nico">Nico</option><option value="Gabo">Gabo</option><option value="Guest">Guest...</option>
+                    </select>
+                    <div class="guest-input-container"><input type="text" id="p${i}-name" placeholder="Guest Name" style="display:none"></div>
+                    <input type="radio" name="winner" value="${i}">
+                </div>`;
             }
         };
+
+        window.toggleGuestInput = (idx) => {
+            const sel = document.getElementById(`p${idx}-sel`).value;
+            document.getElementById(`p${idx}-name`).style.display = (sel === 'Guest' ? 'block' : 'none');
+        };
+
         window.closeModal = () => document.getElementById('modal').style.display='none';
         window.toggleAIRow = () => document.getElementById('ai-row').style.display = document.getElementById('ai-toggle').checked ? 'grid' : 'none';
         window.switchTab = (t) => { currentTab = t; document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(t))); render(); };
@@ -215,8 +249,6 @@
             const v = document.getElementById('meter-val');
             const r = Math.random() * 100;
             if(n) n.style.left = r + '%';
-            if(v) v.innerText = r.toFixed(1) + "% LOGGO";
+            if(v) v.innerText = r.toFixed(1) + " % LOGGO";
         }, 1500);
     </script>
-</body>
-</html>
