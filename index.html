@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GaBonzoTan v.1.2.4</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --card-dark: #1e1e1e;
+            --accent-gold: #f1c40f;
+            --reset-red: #e74c3c;
+            --ai-purple: #9b59b6;
+            --text-dim: #b3b3b3;
+            --insight-blue: #3498db;
+        }
+
+        body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+
+        /* --- PASSWORD OVERLAY --- */
+        #lock-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; margin-bottom: 10px; }
+
+        #app-content { width: 100%; max-width: 600px; padding: 40px 20px; filter: blur(10px); transition: filter 0.5s ease; }
+
+        h1 { text-align: center; font-weight: 300; letter-spacing: 4px; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 10px;}
+        
+        .nav-tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; overflow-x: auto;}
+        .tab-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 5px 10px; white-space: nowrap; }
+        .tab-btn.active { color: var(--accent-gold); border-bottom: 2px solid var(--accent-gold); }
+
+        .add-game-btn { width: 100%; background: var(--accent-gold); color: black; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; font-size: 16px; }
+
+        .history-item { background: var(--card-dark); border-radius: 8px; padding: 15px; margin-bottom: 12px; border-left: 4px solid var(--accent-gold); position: relative;}
+        .ai-win-card { border-left-color: var(--ai-purple) !important; }
+        .insight-card { border-left-color: var(--insight-blue) !important; text-align: center; }
+        
+        /* DELETE BUTTON */
+        .del-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #555; cursor: pointer; font-size: 18px; line-height: 1; padding: 5px; }
+        .del-btn:hover { color: var(--reset-red); }
+
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .filter-group label { display: block; font-size: 10px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; }
+        .filter-group select { width: 100%; background: #333; color: white; border: 1px solid #444; padding: 5px; border-radius: 4px; }
+
+        .stat-circle { width: 80px; height: 80px; border: 3px solid var(--insight-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 15px auto; color: var(--insight-blue); }
+
+        /* --- LOGGOMETER (PROTECTED) --- */
+        .loggometer { position: fixed; bottom: 20px; right: 20px; width: 120px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .meter-label { font-size: 9px; color: #666; text-align: center; margin-bottom: 5px; }
+        .meter-dial { height: 10px; background: #222; border-radius: 5px; position: relative; overflow: hidden; }
+        .meter-needle { position: absolute; height: 100%; width: 4px; background: var(--accent-gold); left: 0%; transition: left 0.3s ease; box-shadow: 0 0 10px var(--accent-gold); }
+        .meter-value { font-size: 10px; color: #aaa; text-align: center; margin-top: 5px; font-family: monospace; }
+
+        .history-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; padding-right: 25px;}
+        .player-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { background: #333; padding: 4px 10px; border-radius: 20px; font-size: 13px; border: 1px solid transparent; }
+        .winner-chip { border-color: var(--accent-gold); color: var(--accent-gold); font-weight: bold; }
+        .vp-badge { display: inline-block; background: var(--accent-gold); color: black; font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 10px; vertical-align: middle;}
+
+        /* --- MODAL --- */
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #252525; padding: 25px; border-radius: 12px; width: 90%; max-width: 420px; }
+        .row-entry { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .reset-btn { position: fixed; bottom: 20px; left: 20px; background: none; border: 1px solid #444; color: #444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 10px;}
+    </style>
+</head>
+<body>
+
+    <div id="lock-screen">
+        <h2 style="color:var(--accent-gold); font-weight: 300;">ACCESS REQUIRED</h2>
+        <input type="password" id="pass-input" placeholder="Enter Password...">
+        <button onclick="checkPass()" style="padding: 10px 20px; cursor: pointer;">ENTER</button>
+    </div>
+
+    <div id="app-content">
+        <h1>GaBonzoTan v.1.2.4</h1>
+        
+        <div class="nav-tabs">
+            <button id="tab-history" class="tab-btn active" onclick="switchTab('history')">Player History</button>
+            <button id="tab-insights" class="tab-btn" onclick="switchTab('insights')">Player Insights</button>
+            <button id="tab-ai" class="tab-btn" onclick="switchTab('ai')">AI Insights</button>
+        </div>
+
+        <button class="add-game-btn" onclick="openModal()">+ ADD NEW GAME</button>
+        <div id="main-view"></div>
+        <button class="reset-btn" onclick="resetAll()">PURGE DATABASE</button>
+
+        <div class="loggometer">
+            <div class="meter-label">LOGGOMETER™</div>
+            <div class="meter-dial">
+                <div id="needle" class="meter-needle"></div>
+            </div>
+            <div id="meter-val" class="meter-value">0.0% LOGGO</div>
+        </div>
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0">Record Session</h3>
+            <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:10px; margin-bottom:15px">
+                <div><label style="font-size:10px">Date</label><input type="date" id="game-date"></div>
+                <div><label style="font-size:10px">Winning VP</label><input type="number" id="winning-vp" placeholder="10"></div>
+            </div>
+            <div id="player-entry-list"></div>
+            <div style="background:#1a1a1a; padding:10px; border-radius:6px; margin-top:10px">
+                <div style="display:flex; align-items:center; gap:10px">
+                    <input type="checkbox" id="ai-played" style="width:auto" onchange="handleAIToggle()">
+                    <label for="ai-played" style="margin:0; text-transform:none">Include AI Player</label>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px">
+                <button onclick="closeModal()" style="flex:1; padding:10px; background:#444; border:none; color:white; border-radius:4px">Cancel</button>
+                <button onclick="saveGame()" style="flex:1; padding:10px; background:var(--accent-gold); border:none; color:black; font-weight:bold; border-radius:4px">Save Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PRESETS = ["Nico", "Gabo"];
+        const defaultGames = [
+            { id: 1, date: "2026-01-20", winningVP: 10, aiPlayed: true, players: ["Gabo", "Nico", "AI"], winner: "Gabo" },
+            { id: 2, date: "2026-01-20", winningVP: 10, aiPlayed: true, players: ["Nico", "Gabo", "AI"], winner: "Nico" },
+            { id: 3, date: "2026-01-20", winningVP: 10, aiPlayed: true, players: ["Gabo", "Nico", "AI"], winner: "Gabo" },
+            { id: 4, date: "2026-01-21", winningVP: 10, aiPlayed: true, players: ["Nico", "Gabo", "AI"], winner: "Nico" }
+        ];
+
+        let games = JSON.parse(localStorage.getItem('gabonzo_db')) || defaultGames;
+        let currentTab = 'history';
+
+        function checkPass() {
+            if(document.getElementById('pass-input').value === "bowwow") {
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('app-content').style.filter = 'none';
+                render();
+            } else { alert("Wrong password."); }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(tab)));
+            render();
+        }
+
+        function deleteGame(id) {
+            if(confirm("Remove this game from history?")) {
+                games = games.filter(g => g.id !== id);
+                localStorage.setItem('gabonzo_db', JSON.stringify(games));
+                render();
+            }
+        }
+
+        function renderInsights() {
+            const view = document.getElementById('main-view');
+            // Dynamically scan for all unique names in the DB
+            const allPlayers = [...new Set(games.flatMap(g => g.players))].sort();
+            const allYears = [...new Set(games.map(g => g.date.split('-')[0]))].sort();
+            const months = ["All", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            view.innerHTML = `
+                <div class="filter-grid">
+                    <div class="filter-group"><label>Player</label><select id="filter-player">${allPlayers.map(p => `<option value="${p}">${p}</option>`).join('')}</select></div>
+                    <div class="filter-group"><label>Month</label><select id="filter-month">${months.map((m,i) => `<option value="${i===0 ? 'All' : (i < 10 ? '0'+i : i)}">${m}</option>`).join('')}</select></div>
+                    <div class="filter-group"><label>Year</label><select id="filter-year">${allYears.map(y => `<option value="${y}">${y}</option>`).join('')}</select></div>
+                </div>
+                <div id="insight-results"></div>
+            `;
+
+            document.querySelectorAll('#filter-player, #filter-month, #filter-year').forEach(el => el.onchange = calculateInsights);
+            calculateInsights();
+        }
+
+        function calculateInsights() {
+            const p = document.getElementById('filter-player').value;
+            const m = document.getElementById('filter-month').value;
+            const y = document.getElementById('filter-year').value;
+
+            const filtered = games.filter(g => {
+                const [gYear, gMonth] = g.date.split('-');
+                return g.players.includes(p) && (m === "All" || gMonth === m) && gYear === y;
+            });
+
+            const wins = filtered.filter(g => g.winner === p).length;
+            const total = filtered.length;
+            const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('insight-results').innerHTML = `
+                <div class="history-item insight-card">
+                    <h2 style="color:var(--insight-blue); margin:0">${p}'s Stats</h2>
+                    <div class="stat-circle">${wins}</div>
+                    <p>Wins in <b>${total}</b> games played</p>
+                    <div style="font-size:18px; color:white; margin-top:10px">Win Rate: <span style="color:var(--accent-gold)">${winRate}%</span></div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const view = document.getElementById('main-view');
+            if (currentTab === 'insights') { renderInsights(); return; }
+            view.innerHTML = '';
+
+            if(currentTab === 'history') {
+                games.slice().reverse().forEach(g => {
+                    const div = document.createElement('div');
+                    div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
+                    div.innerHTML = `
+                        <button class="del-btn" onclick="deleteGame(${g.id})">&times;</button>
+                        <div class="history-header">
+                            <span>${g.date} <span class="vp-badge">${g.winningVP} VP</span></span>
+                            <span>${g.aiPlayed ? 'AI INCLUDED' : 'HUMANS ONLY'}</span>
+                        </div>
+                        <div class="player-chips">${g.players.map(p => `<span class="chip ${p === g.winner ? 'winner-chip' : ''}">${p}</span>`).join('')}</div>
+                    `;
+                    view.appendChild(div);
+                });
+            } else if (currentTab === 'ai') {
+                const totalAI = games.filter(g => g.aiPlayed).length;
+                const aiWins = games.filter(g => g.winner === 'AI').length;
+                const winRate = totalAI > 0 ? ((aiWins / totalAI) * 100).toFixed(1) : 0;
+                view.innerHTML = `<div class="history-item ai-win-card" style="text-align:center">
+                    <h2 style="color:var(--ai-purple); margin:0">AI System Stats</h2>
+                    <div style="font-size:40px; margin:10px 0">${aiWins} / ${totalAI}</div>
+                    <div style="font-size:20px; color:var(--accent-gold)">Efficiency: ${winRate}%</div>
+                </div>`;
+            }
+        }
+
+        function openModal() {
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('game-date').valueAsDate = new Date();
+            document.getElementById('winning-vp').value = 10;
+            document.getElementById('ai-played').checked = false;
+            const container = document.getElementById('player-entry-list');
+            container.innerHTML = '';
+            for(let i=1; i<=4; i++) {
+                container.innerHTML += `<div class="row-entry">
+                    <select id="p${i}-select" onchange="toggleGuestInput(${i})">
+                        <option value="">- Empty -</option>${PRESETS.map(p => `<option value="${p}">${p}</option>`).join('')}
+                        <option value="Guest">Guest...</option>
+                    </select>
+                    <input type="text" id="p${i}-name" placeholder="Name" style="display:none">
+                    <div></div><input type="radio" name="winner" value="${i}">
+                </div>`;
+            }
+            container.innerHTML += `<div id="ai-row" class="row-entry" style="display:none; color:var(--ai-purple)">
+                <div style="font-weight:bold; padding-left:10px">AI Player</div><div></div><input type="radio" name="winner" value="AI">
+            </div>`;
+        }
+        function toggleGuestInput(i) {
+            const select = document.getElementById(`p${i}-select`);
+            const input = document.getElementById(`p${i}-name`);
+            input.style.display = select.value === 'Guest' ? 'block' : 'none';
+        }
+        function handleAIToggle() { document.getElementById('ai-row').style.display = document.getElementById('ai-played').checked ? 'grid' : 'none'; }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        
+        function saveGame() {
+            const aiPlayed = document.getElementById('ai-played').checked;
+            const winnerRadio = document.querySelector('input[name="winner"]:checked');
+            if(!winnerRadio) { alert("Select a winner"); return; }
+            
+            const game = { 
+                id: Date.now(), 
+                date: document.getElementById('game-date').value, 
+                winningVP: document.getElementById('winning-vp').value, 
+                aiPlayed, 
+                players: [], 
+                winner: "" 
+            };
+
+            for(let i=1; i<=4; i++) {
+                const select = document.getElementById(`p${i}-select`).value;
+                const finalName = select === 'Guest' ? document.getElementById(`p${i}-name`).value : select;
+                if(finalName) { 
+                    game.players.push(finalName); 
+                    if(winnerRadio.value == i) game.winner = finalName; 
+                }
+            }
+            if(aiPlayed) { 
+                game.players.push("AI"); 
+                if(winnerRadio.value === "AI") game.winner = "AI"; 
+            }
+            
+            games.push(game);
+            localStorage.setItem('gabonzo_db', JSON.stringify(games));
+            closeModal();
+            render();
+        }
+
+        function resetAll() { if(confirm("Purge all data?") && confirm("Permanent?")) { games = []; localStorage.setItem('gabonzo_db', JSON.stringify(games)); render(); } }
+
+        setInterval(() => {
+            const needle = document.getElementById('needle');
+            const valLabel = document.getElementById('meter-val');
+            const rand = Math.random() * 100;
+            if(needle) needle.style.left = rand + '%';
+            if(valLabel) valLabel.innerText = rand.toFixed(1) + "% LOGGO";
+        }, 1500);
+    </script>
+</body>
+</html>
