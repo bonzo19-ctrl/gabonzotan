@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.7</title>
+    <title>GaBonzoTan v.1.8.19</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -12,6 +12,7 @@
             --ai-purple: #9b59b6; --text-dim: #b3b3b3; --insight-blue: #3498db; --red: #e74c3c;
             --about-green: #27ae60;
             --improvement-green: #1abc9c;
+            --options-pink: #e056fd;
         }
         body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         
@@ -56,18 +57,35 @@
 
         .app-footer { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px; padding-top: 15px; border-top: 1px solid #222; gap: 10px; }
         .footer-btns { display: flex; flex-direction: row; gap: 6px; flex-wrap: wrap; flex: 1; }
-        .footer-btns button { padding: 8px 4px; border-radius: 6px; font-size: 7px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex: 1; min-width: 75px; height: 32px; }
+        .footer-btns button { 
+            padding: 4px 2px; 
+            border-radius: 6px; 
+            font-size: 7px; 
+            cursor: pointer; 
+            letter-spacing: 0.5px; 
+            text-transform: uppercase; 
+            white-space: normal; 
+            flex: 1; 
+            min-width: 55px; 
+            min-height: 32px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.1;
+        }
         
-        .wipe-btn { background: #2a1111; color: var(--red); border: 1px solid var(--red); }
         .changelog-btn { background: #1e112a; color: var(--ai-purple); border: 1px solid var(--ai-purple); }
         .improvement-btn { background: #112a28; color: var(--improvement-green); border: 1px solid var(--improvement-green); }
+        .logins-btn { background: #111a2a; color: var(--insight-blue); border: 1px solid var(--insight-blue); }
+        .options-btn { background: #2a1125; color: var(--options-pink); border: 1px solid var(--options-pink); }
         .about-btn { background: #112a1a; color: var(--about-green); border: 1px solid var(--about-green); }
 
         .loggometer { width: 90px; background: #111; padding: 8px; border-radius: 8px; border: 1px solid #333; cursor: pointer; }
         .meter-dial { height: 6px; background: #222; border-radius: 5px; position: relative; overflow: hidden; margin: 4px 0; }
         .meter-needle { position: absolute; height: 100%; width: 4px; background: var(--accent-gold); left: 0%; transition: left 0.3s ease; }
 
-        #modal, #improvement-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        #modal, #improvement-modal, #logins-modal, #options-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 95%; max-width: 440px; border: 1px solid #333; max-height: 90vh; overflow-y: auto; }
         .row-entry { display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 12px; align-items: center; }
         select, input, textarea { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 14px; }
@@ -85,14 +103,39 @@
         .changelog-list li::before { content: "•"; position: absolute; left: 0; color: var(--insight-blue); }
         .back-nav-btn { width: auto; background: #1e112a; color: var(--ai-purple); border: solid 1px var(--ai-purple); padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; letter-spacing: 1px; display: block; margin: 0 auto; }
 
-        .feedback-list { margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; }
-        .feedback-card { background: #161616; padding: 10px; border-radius: 6px; margin-bottom: 10px; position: relative; border-left: 3px solid var(--improvement-green); }
+        .feedback-list, .login-list { margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; }
+        .feedback-card, .login-card { background: #161616; padding: 10px; border-radius: 6px; margin-bottom: 10px; position: relative; }
+        .feedback-card { border-left: 3px solid var(--improvement-green); }
+        .login-card { border-left: 3px solid var(--insight-blue); display: flex; justify-content: space-between; align-items: center; }
         .feedback-text { font-size: 12px; color: #ddd; margin-bottom: 5px; white-space: pre-wrap; }
         .feedback-meta { font-size: 9px; color: #666; text-transform: uppercase; }
         .feedback-actions { position: absolute; top: 5px; right: 8px; display: flex; gap: 8px; }
+        .login-user { font-weight: bold; color: var(--insight-blue); font-size: 13px; text-transform: uppercase; }
+        .login-time { font-size: 10px; color: #666; }
+
+        /* THE GHOSTLY LOGGO FLASH */
+        #loggo-flash {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18vw;
+            font-weight: 900;
+            color: var(--red);
+            opacity: 0;
+            text-shadow: 0 0 30px rgba(231, 76, 60, 0.6);
+            font-family: 'Arial Black', sans-serif;
+            letter-spacing: 10px;
+            user-select: none;
+        }
     </style>
 </head>
 <body onload="checkSessionOnLoad()">
+
+    <div id="loggo-flash">LOGGO</div>
 
     <div id="lock-screen">
         <div class="logo-container">
@@ -104,7 +147,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.7</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.19</div>
     </div>
 
     <div id="app-content">
@@ -116,7 +159,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.7</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.19</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -129,9 +172,10 @@
 
         <div class="app-footer">
             <div class="footer-btns">
-                <button class="wipe-btn" onclick="alert('Nice try!')">WIPE DATABASE</button>
                 <button class="changelog-btn" onclick="switchTab('changelog')">CHANGELOGGO</button>
                 <button class="improvement-btn" onclick="openImprovementModal()">IMPROVEMENTS</button>
+                <button class="logins-btn" onclick="openLoginsModal()">LOGINS</button>
+                <button class="options-btn" onclick="openOptionsModal()">MORE OPTIONS</button>
                 <button class="about-btn" onclick="alert('Catan Tracker for Bonzito and Gabito. Rar.')">ABOUT</button>
             </div>
             <div class="loggometer" onclick="alert('RAAAAAAAR')">
@@ -210,9 +254,38 @@
                 <button onclick="closeImprovementModal()" style="flex:1; background:#444; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer">Close</button>
                 <button id="save-improvement-btn" onclick="saveImprovement()" style="flex:1; background:var(--improvement-green); color:black; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer">Save Note</button>
             </div>
-
             <div id="feedback-list" class="feedback-list">
                 <div style="text-align:center; color:#555; font-size:12px;">Loading feedback...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="logins-modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:var(--insight-blue)">Login History</h3>
+            <div id="login-list" class="login-list">
+                <div style="text-align:center; color:#555; font-size:12px;">Loading history...</div>
+            </div>
+            <div style="display:flex; margin-top:15px">
+                <button onclick="document.getElementById('logins-modal').style.display='none'" style="flex:1; background:#444; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="options-modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:var(--options-pink)">More Options</h3>
+            <div style="margin-top:20px; border: 1px solid #333; padding: 15px; border-radius: 8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold; color:#ddd; white-space:nowrap;">Enable Subliminal LOGGO Flash</span>
+                    <input type="checkbox" id="flash-toggle" onchange="toggleLoggoFlash()">
+                </div>
+                <div style="margin-top:10px; font-size:11px; color:#888; line-height:1.4;">
+                    When enabled, the random LoggoMeter has a chance to trigger a ghostly "LOGGO" flash on screen whenever the meter hits 70% or higher.
+                </div>
+            </div>
+            <div style="display:flex; margin-top:15px">
+                <button onclick="document.getElementById('options-modal').style.display='none'" style="flex:1; background:#444; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer">Close</button>
             </div>
         </div>
     </div>
@@ -224,6 +297,7 @@
         
         let supabaseClient, games = [], currentTab = 'history', currentUser = '';
         let eggClickCount = 0;
+        let loggoFlashEnabled = false;
 
         function formatDate(dateStr) {
             if(!dateStr) return '??-??-????';
@@ -242,6 +316,11 @@
         }
 
         window.checkSessionOnLoad = function() {
+            // Load Settings
+            const flashSetting = localStorage.getItem('gbt_flash_enabled');
+            loggoFlashEnabled = (flashSetting === 'true');
+            document.getElementById('flash-toggle').checked = loggoFlashEnabled;
+
             const savedUser = localStorage.getItem('gbt_user');
             const lastActive = localStorage.getItem('gbt_timestamp');
             const now = Date.now();
@@ -257,7 +336,7 @@
 
         function updateSessionTimestamp() { localStorage.setItem('gbt_timestamp', Date.now()); }
 
-        window.checkPass = function() {
+        window.checkPass = async function() {
             const rawUser = document.getElementById('user-name').value.trim().toLowerCase();
             const pass = document.getElementById('pass-input').value;
             if(rawUser !== "nico" && rawUser !== "gabo") { alert("User not recognized."); return; }
@@ -269,6 +348,9 @@
                 document.getElementById('app-content').style.display = 'block';
                 document.getElementById('active-user-tag').innerText = "User: " + currentUser;
                 initSupabase();
+                try {
+                    await supabaseClient.from('logins').insert([{ user_name: currentUser }]);
+                } catch(e) { console.log("Login tracking failed (table might not exist)"); }
             } else { alert("Unauthorized."); }
         };
 
@@ -330,16 +412,74 @@
                 }
             } else if (currentTab === 'insights') {
                 const allPlayers = [...new Set(games.flatMap(g => g.players))].filter(p => p !== 'AI').sort();
+                
+                // --- PLAYER GRID START ---
                 let gridHTML = '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">';
                 allPlayers.forEach(p => {
                     const wins = games.filter(g => g.winner === p);
-                    gridHTML += `<div style="background:var(--card-dark); padding:15px; border-radius:8px; text-align:center; border-bottom:3px solid var(--insight-blue);">
-                        <div style="font-weight:bold; color:var(--insight-blue); text-transform:uppercase; font-size:16px; margin-bottom:5px;">${p}</div>
-                        <div style="width:60px; height:60px; border:2px solid var(--insight-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; margin:10px auto; color:var(--insight-blue); font-weight:bold;">${wins.length}</div>
+                    
+                    // Determine Color
+                    let pColor = 'var(--accent-gold)';
+                    if (p === 'Nico') pColor = 'var(--insight-blue)';
+                    if (p === 'Gabo') pColor = 'var(--red)';
+
+                    gridHTML += `<div style="background:var(--card-dark); padding:15px; border-radius:8px; text-align:center; border-bottom:3px solid ${pColor};">
+                        <div style="font-weight:bold; color:${pColor}; text-transform:uppercase; font-size:16px; margin-bottom:5px;">${p}</div>
+                        <div style="width:60px; height:60px; border:2px solid ${pColor}; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; margin:10px auto; color:${pColor}; font-weight:bold;">${wins.length}</div>
                         <div style="font-size:9px; color:var(--text-dim)">Wins</div>
                     </div>`;
                 });
-                view.innerHTML = gridHTML + '</div>';
+                gridHTML += '</div>';
+                // --- PLAYER GRID END ---
+
+                // --- MAP META ANALYSIS START ---
+                gridHTML += '<h3 style="color:var(--text-dim); margin-top:30px; margin-bottom:10px; text-align:center; text-transform:uppercase; letter-spacing:1px; font-size:12px;">Map Meta Analysis</h3><div style="display:grid; gap:10px;">';
+                
+                const uniqueMaps = [...new Set(games.map(g => g.map_used).filter(m => m))].sort();
+                uniqueMaps.forEach(m => {
+                    const mapGames = games.filter(g => g.map_used === m);
+                    // Count winners
+                    const winners = {};
+                    mapGames.forEach(g => { winners[g.winner] = (winners[g.winner] || 0) + 1; });
+                    
+                    // Sort winners descending
+                    const sortedWinners = Object.entries(winners).sort((a,b) => b[1] - a[1]);
+                    const topWinner = sortedWinners.length > 0 ? sortedWinners[0][0] : null;
+
+                    gridHTML += `<div style="background:var(--card-dark); padding:12px; border-radius:8px; border-left:3px solid #555;">
+                        <div style="font-weight:bold; color:#eee; font-size:13px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">${m} <span style="font-weight:normal; color:#666; font-size:10px;">(${mapGames.length} games)</span></div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">`;
+                    
+                    sortedWinners.forEach(([player, count]) => {
+                        let pColor = '#aaa';
+                        let rowStyle = "";
+                        let crown = "";
+                        
+                        // Percentage
+                        const pct = Math.round((count / mapGames.length) * 100);
+
+                        if (player === 'Nico') pColor = 'var(--insight-blue)';
+                        if (player === 'Gabo') pColor = 'var(--red)';
+                        if (player === 'AI') pColor = 'var(--ai-purple)';
+                        
+                        if (player === topWinner) {
+                            crown = " 👑";
+                            rowStyle = "font-weight:bold; color:white;";
+                        }
+
+                        gridHTML += `<div style="font-size:11px; color:#ccc; display:flex; justify-content:space-between; ${rowStyle}">
+                            <span><span style="color:${pColor}; font-weight:bold;">${player}</span>${crown}</span>
+                            <span>${count} wins (${pct}%)</span>
+                        </div>`;
+                    });
+                    
+                    gridHTML += `</div></div>`;
+                });
+                gridHTML += '</div>';
+                // --- MAP META ANALYSIS END ---
+
+                view.innerHTML = gridHTML;
+
             } else if (currentTab === 'ai') {
                 const aiGames = games.filter(g => g.aiplayed);
                 const aiWins = aiGames.filter(g => g.winner === 'AI');
@@ -352,6 +492,100 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.19</div>
+                            <ul class="changelog-list">
+                                <li>Removed the "WIPE DATABASE" button from the footer.</li>
+                                <li>Optimized footer layout: Remaining 5 buttons now have adequate space.</li>
+                                <li>Ensured text wrapping works correctly for longer button labels like "CHANGELOGGO".</li>
+                                <li>Forced "Enable Subliminal LOGGO Flash" option to display on a single line.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.18</div>
+                            <ul class="changelog-list">
+                                <li>Fixed footer button layout issue where text was overflowing.</li>
+                                <li>Enabled multi-line text wrapping for footer buttons.</li>
+                                <li>Added auto-centering for button text to support variable heights.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.17</div>
+                            <ul class="changelog-list">
+                                <li>Added "MORE OPTIONS" pink button to the footer.</li>
+                                <li>Introduced togglable setting for the "Subliminal LOGGO Flash".</li>
+                                <li>Flash feature is now disabled by default and persists via LocalStorage.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.16</div>
+                            <ul class="changelog-list">
+                                <li>Revised "Subliminal LOGGO Flash" to be more visible.</li>
+                                <li>Changed transition logic to "Instant On, Slow Fade Off".</li>
+                                <li>Increased opacity to 0.8 and duration to 200ms.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.15</div>
+                            <ul class="changelog-list">
+                                <li>Implemented the "Subliminal LOGGO Flash": A ghostly red "LOGGO" appears briefly when the meter hits 70%+.</li>
+                                <li>Feature allows for passive chaos while using the app.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.14</div>
+                            <ul class="changelog-list">
+                                <li>Refined Map Meta Analysis with clearer vertical layout.</li>
+                                <li>Added Crown (👑) icon to highlight the map leader.</li>
+                                <li>Included win percentages alongside raw win counts for better insight.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.13</div>
+                            <ul class="changelog-list">
+                                <li>Implemented Advanced "Map Meta" Analysis in Player Stats tab.</li>
+                                <li>Updated Player Stats UI: Nico is now Blue, Gabo is Red.</li>
+                                <li>Added breakdown of winners per map (games played, win counts).</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.12</div>
+                            <ul class="changelog-list">
+                                <li>Added blue "LOGINS" button to footer to view access history.</li>
+                                <li>Implemented login tracking to "logins" database table.</li>
+                                <li>Created modal to display list of user logins with timestamps.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.11</div>
+                            <ul class="changelog-list">
+                                <li>Implemented integer casting for IDs in delete operations to prevent type mismatch.</li>
+                                <li>Added server-side row return check to confirm successful deletion.</li>
+                                <li>Provided visual alerts for RLS permission errors on deletion.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.10</div>
+                            <ul class="changelog-list">
+                                <li>Implemented robust deletion fix: IDs are now passed as strings to prevent type coercion.</li>
+                                <li>Added server-side return check: The app now verifies if a row was actually deleted by the database.</li>
+                                <li>Added explicit alert feedback if a deletion appears successful but removes 0 items.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.9</div>
+                            <ul class="changelog-list">
+                                <li>Re-affirmed the strict requirement to keep the full, detailed changelog at all times.</li>
+                                <li>Verified that the "Changeloggo" section remains a complete history without condensation.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.8</div>
+                            <ul class="changelog-list">
+                                <li>Reconfirmed commitment to code persistence.</li>
+                                <li>Ensured no existing features or logic are removed during iterative updates.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.7</div>
                             <ul class="changelog-list">
@@ -548,11 +782,11 @@
                 const ds = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
                 const safeContent = f.content.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 return `
-                <div class="feedback-card">
+                <div class="feedback-card" id="card-${f.id}">
                     ${isOwner ? `
                     <div class="feedback-actions">
-                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="editFeedback(${f.id}, '${safeContent}')">✎</span>
-                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="deleteFeedback(${f.id})">&times;</span>
+                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="editFeedback('${f.id}', '${safeContent}')">✎</span>
+                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="deleteFeedback('${f.id}')">&times;</span>
                     </div>` : ''}
                     <div class="feedback-text">${f.content}</div>
                     <div class="feedback-meta">By ${f.author} • ${ds}</div>
@@ -585,14 +819,49 @@
 
         window.deleteFeedback = async (id) => {
             if(!confirm("Delete this improvement?")) return;
+            const card = document.getElementById(`card-${id}`);
             try {
-                const { error } = await supabaseClient.from('feedback').delete().eq('id', id);
+                const { data, error } = await supabaseClient.from('feedback').delete().eq('id', parseInt(id)).select();
                 if(error) throw error;
-                fetchFeedback();
-            } catch (err) { 
-                console.error("Delete failed:", err);
-                alert("DELETE ERROR: " + err.message); 
-            }
+                if(data && data.length === 0) {
+                    alert("Delete failed: Item not found or permission denied. Check Supabase RLS.");
+                    if(card) card.style.borderLeft = "3px solid red";
+                } else {
+                    fetchFeedback();
+                }
+            } catch (err) { alert("DELETE ERROR: " + err.message); }
+        };
+
+        window.openLoginsModal = () => {
+            updateSessionTimestamp();
+            document.getElementById('logins-modal').style.display = 'flex';
+            fetchLogins();
+        };
+
+        async function fetchLogins() {
+            const list = document.getElementById('login-list');
+            list.innerHTML = `<div style="text-align:center; color:#555; font-size:12px;">Loading history...</div>`;
+            try {
+                const { data, error } = await supabaseClient.from('logins').select('*').order('created_at', { ascending: false }).limit(50);
+                if(error) throw error;
+                if(data.length === 0) { list.innerHTML = `<div style="text-align:center; color:#444; font-size:11px;">No logins recorded yet.</div>`; return; }
+                list.innerHTML = data.map(l => {
+                    const d = new Date(l.created_at);
+                    const ds = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                    return `<div class="login-card"><div class="login-user">${l.user_name}</div><div class="login-time">${ds}</div></div>`;
+                }).join('');
+            } catch(e) { list.innerHTML = `<div style="text-align:center; color:#red; font-size:11px;">Error loading logins (Table missing?).</div>`; }
+        }
+
+        // OPTIONS MENU LOGIC
+        window.openOptionsModal = () => {
+            updateSessionTimestamp();
+            document.getElementById('options-modal').style.display = 'flex';
+        };
+
+        window.toggleLoggoFlash = () => {
+            loggoFlashEnabled = document.getElementById('flash-toggle').checked;
+            localStorage.setItem('gbt_flash_enabled', loggoFlashEnabled);
         };
 
         window.removeGame = async function(id) { 
@@ -610,6 +879,18 @@
             if(n) n.style.left = r + '%';
             const m = document.getElementById('meter-val');
             if(m) m.innerText = r.toFixed(1) + " % LOGGO";
+            
+            // SUBLIMINAL FLASH TRIGGER
+            if (loggoFlashEnabled && r >= 70) {
+                const flash = document.getElementById('loggo-flash');
+                flash.style.transition = 'none'; // Instant ON
+                flash.style.opacity = '0.8';
+                setTimeout(() => {
+                    flash.style.transition = 'opacity 0.5s ease-out'; // Slow OFF
+                    flash.style.opacity = '0';
+                }, 200); 
+            }
+
             const lastActive = localStorage.getItem('gbt_timestamp');
             if(currentUser && lastActive && (Date.now() - lastActive > 600000)) { logout(); }
         }, 1500);
