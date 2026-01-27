@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.30</title>
+    <title>GaBonzoTan v.1.8.31</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -29,7 +29,7 @@
         #lock-screen .warning-msg { font-style: italic; color: #666; font-size: 13px; margin-bottom: 25px; margin-top: -10px; }
         
         .login-box { display: flex; flex-direction: column; gap: 10px; width: 240px; }
-        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; background: #1a1a1a; color: white; border: 1px solid #333; font-size: 16px; text-transform: lowercase; }
+        #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; background: #1a1a1a; color: white; border: 1px solid #333; font-size: 16px; }
         #lock-screen .version-tag { margin-top: 60px; }
         
         #app-content { width: 100%; max-width: 500px; padding: 30px 20px; display: none; position: relative; }
@@ -189,11 +189,11 @@
         </div>
         <div class="warning-msg">(If you're not Gabo or Nico, get the fuck out of here.)</div>
         <div class="login-box">
-            <input type="text" id="user-name" placeholder="Name" autocomplete="off" onkeydown="if(event.key==='Enter') document.getElementById('pass-input').focus()">
+            <input type="email" id="user-name" placeholder="Email" autocomplete="off" onkeydown="if(event.key==='Enter') document.getElementById('pass-input').focus()">
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
-            <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
+            <button id="login-btn" onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.30</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.31</div>
     </div>
 
     <div id="app-content">
@@ -205,7 +205,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo" onclick="switchTab('history')" style="cursor:pointer">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.30</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.31</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -393,61 +393,98 @@
             viewer.style.display = 'flex';
         }
 
-        window.checkSessionOnLoad = function() {
+        window.checkSessionOnLoad = async function() {
             // Load Settings
             const flashSetting = localStorage.getItem('gbt_flash_enabled');
             loggoFlashEnabled = (flashSetting === 'true');
             document.getElementById('flash-toggle').checked = loggoFlashEnabled;
 
-            const savedUser = localStorage.getItem('gbt_user');
-            const lastActive = localStorage.getItem('gbt_timestamp');
-            const now = Date.now();
-            if (savedUser && lastActive && (now - lastActive < 600000)) {
-                currentUser = savedUser;
-                updateSessionTimestamp();
-                document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('app-content').style.display = 'block';
-                document.getElementById('active-user-tag').innerText = "User: " + currentUser;
-                initSupabase();
-            } else { confirmLogout(); }
+            initSupabase(); // Init first
+            
+            const { data } = await supabaseClient.auth.getSession();
+            if (data && data.session) {
+                const userEmail = data.session.user.email;
+                currentUser = resolveUserFromEmail(userEmail);
+                showApp();
+            } else {
+                showLockScreen();
+            }
         };
+
+        function resolveUserFromEmail(email) {
+            if (!email) return "Guest";
+            const lower = email.toLowerCase();
+            if (lower.includes('nico')) return 'Nico';
+            if (lower.includes('gabo')) return 'Gabo';
+            return email.split('@')[0]; // Fallback
+        }
+
+        function showApp() {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('active-user-tag').innerText = "User: " + currentUser;
+            fetchGames();
+        }
+
+        function showLockScreen() {
+            document.getElementById('lock-screen').style.display = 'flex';
+            document.getElementById('app-content').style.display = 'none';
+        }
 
         function updateSessionTimestamp() { localStorage.setItem('gbt_timestamp', Date.now()); }
 
         window.checkPass = async function() {
-            const rawUser = document.getElementById('user-name').value.trim().toLowerCase();
+            const email = document.getElementById('user-name').value.trim();
             const pass = document.getElementById('pass-input').value;
-            if(rawUser !== "nico" && rawUser !== "gabo") { alert("User not recognized."); return; }
-            if(pass === "bowwow") {
-                currentUser = rawUser.charAt(0).toUpperCase() + rawUser.slice(1);
-                localStorage.setItem('gbt_user', currentUser);
-                updateSessionTimestamp();
-                document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('app-content').style.display = 'block';
-                document.getElementById('active-user-tag').innerText = "User: " + currentUser;
-                initSupabase();
-                try {
-                    await supabaseClient.from('logins').insert([{ user_name: currentUser }]);
-                } catch(e) { console.log("Login tracking failed (table might not exist)"); }
-            } else { alert("Unauthorized."); }
+            const btn = document.getElementById('login-btn');
+            
+            if(!email || !pass) { alert("Enter email and password."); return; }
+            
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: pass
+            });
+
+            if (error) {
+                alert("Login Failed: " + error.message);
+                btn.innerText = "ENTER";
+                btn.disabled = false;
+            } else {
+                // Success
+                currentUser = resolveUserFromEmail(data.session.user.email);
+                
+                // Track Login
+                try { await supabaseClient.from('logins').insert([{ user_name: currentUser }]); } catch(e) { console.log("Login tracking failed."); }
+                
+                showApp();
+                btn.innerText = "ENTER";
+                btn.disabled = false;
+            }
         };
 
         window.logout = function() {
             document.getElementById('logout-modal').style.display = 'flex';
         };
 
-        window.confirmLogout = function() {
-            localStorage.removeItem('gbt_user'); localStorage.removeItem('gbt_timestamp');
+        window.confirmLogout = async function() {
+            await supabaseClient.auth.signOut();
             document.getElementById('logout-modal').style.display = 'none';
-            document.getElementById('lock-screen').style.display = 'flex';
-            document.getElementById('app-content').style.display = 'none';
+            showLockScreen();
         };
 
         window.closeLogoutModal = function() {
             document.getElementById('logout-modal').style.display = 'none';
         };
 
-        function initSupabase() { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); fetchGames(); }
+        function initSupabase() { 
+            if (!supabaseClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); 
+            }
+        }
+        
         async function fetchGames() {
             const { data, error } = await supabaseClient.from('games')
                 .select('*')
@@ -581,6 +618,14 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.31</div>
+                            <ul class="changelog-list">
+                                <li><strong>Major Security Update:</strong> Migrated login system to Supabase Auth (Email/Password).</li>
+                                <li>Deprecated hardcoded credentials.</li>
+                                <li>Added auto-detection for user identity based on login email.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.30</div>
                             <ul class="changelog-list">
