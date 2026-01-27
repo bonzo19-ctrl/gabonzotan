@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.26</title>
+    <title>GaBonzoTan v.1.8.27</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -148,6 +148,18 @@
         }
         .screenshot-link:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
         
+        .screenshot-card-thumb {
+            height: 60px;
+            width: auto;
+            border-radius: 6px;
+            border: 1px solid #444;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            object-fit: cover;
+        }
+        .screenshot-card-thumb:hover { border-color: var(--accent-gold); opacity: 0.9; }
+
         /* SCREENSHOT PREVIEW IN MODAL */
         .screenshot-preview-container {
             display: flex;
@@ -181,7 +193,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.26</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.27</div>
     </div>
 
     <div id="app-content">
@@ -193,7 +205,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.26</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.27</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -454,7 +466,7 @@
                         <div style="font-size:12px; color:var(--text-dim); margin-bottom:4px">${displayDate}${gameNumSuffix} • ${g.winningvp} VP</div>
                         ${g.map_used ? `<span class="map-info-label">${g.map_used}</span>` : ''}
                         <div>${g.players.map(p => `<span class="chip ${p===g.winner?'winner-chip':''}">${p}</span>`).join('')}</div>
-                        ${g.screenshot_url ? `<div class="screenshot-link" onclick="viewScreenshot('${g.screenshot_url}')">📷 SCREENSHOT</div>` : ''}
+                        ${g.screenshot_url ? `<img src="${g.screenshot_url}" class="screenshot-card-thumb" onclick="viewScreenshot('${g.screenshot_url}')" title="View Full Screenshot">` : ''}
                         ${g.notes ? `<div class="game-notes">${g.notes}</div>` : ''}
                         <div class="logged-meta">Logged by ${loggedBy} on ${logDateStr}</div>
                         <div class="game-id-display">ID: ${g.game_id || 'Generating...'}</div>`;
@@ -550,6 +562,13 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.27</div>
+                            <ul class="changelog-list">
+                                <li>Updated Game History UI: Replaced "📷 SCREENSHOT" text link with a visible thumbnail.</li>
+                                <li>Thumbnail is clickable to view the full-size image in the overlay.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.26</div>
                             <ul class="changelog-list">
