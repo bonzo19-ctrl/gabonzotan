@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.21</title>
+    <title>GaBonzoTan v.1.8.26</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -52,6 +52,7 @@
         
         .game-notes { font-size: 11px; color: #888; margin-top: 10px; font-style: italic; border-top: 1px solid #2a2a2a; padding-top: 8px; }
         .logged-meta { font-size: 9px; color: #888; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .game-id-display { font-size: 8px; color: var(--about-green); font-family: monospace; margin-top: 5px; letter-spacing: 0.5px; }
 
         .h2h-tracker { text-align: center; font-style: italic; color: var(--ai-purple); font-size: 14px; margin: 10px 0; padding: 5px; }
 
@@ -180,7 +181,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.21</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.26</div>
     </div>
 
     <div id="app-content">
@@ -192,7 +193,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.21</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.26</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -455,7 +456,8 @@
                         <div>${g.players.map(p => `<span class="chip ${p===g.winner?'winner-chip':''}">${p}</span>`).join('')}</div>
                         ${g.screenshot_url ? `<div class="screenshot-link" onclick="viewScreenshot('${g.screenshot_url}')">📷 SCREENSHOT</div>` : ''}
                         ${g.notes ? `<div class="game-notes">${g.notes}</div>` : ''}
-                        <div class="logged-meta">Logged by ${loggedBy} on ${logDateStr}</div>`;
+                        <div class="logged-meta">Logged by ${loggedBy} on ${logDateStr}</div>
+                        <div class="game-id-display">ID: ${g.game_id || 'Generating...'}</div>`;
                     view.appendChild(div);
                 });
                 
@@ -548,6 +550,42 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.26</div>
+                            <ul class="changelog-list">
+                                <li>Reduced font size of Game ID to be smaller than the "Logged by" metadata.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.25</div>
+                            <ul class="changelog-list">
+                                <li>Moved Game ID display to bottom of card, beneath the "Logged by" metadata.</li>
+                                <li>Adjusted spacing for visual clarity.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.24</div>
+                            <ul class="changelog-list">
+                                <li>Updated ID Generation Logic: Changed "PVP" to "OH" (Only Humans).</li>
+                                <li>Added Visible Game ID to the history cards (in green monospace font).</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.23</div>
+                            <ul class="changelog-list">
+                                <li>Implemented automatic Unique Game ID generation on save.</li>
+                                <li>Format: [Date]-[#]-[Map]-[VP]-[Type].</li>
+                                <li>Added internal map acronym mapping (e.g. TFI, OFW) for cleaner IDs.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.22</div>
+                            <ul class="changelog-list">
+                                <li>Implemented "Click Outside to Close" for all popup windows.</li>
+                                <li>Enabled quick closing for New Game, Improvements, Logins, and Options modals.</li>
+                                <li>Preserved existing data safety: Clicking inside the box does not close it.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.21</div>
                             <ul class="changelog-list">
@@ -745,6 +783,16 @@
             }
         }
 
+        // GLOBAL CLICK OUTSIDE TO CLOSE
+        window.onclick = function(event) {
+            // IDs of all modals that should close when background is clicked
+            const modalIds = ['modal', 'improvement-modal', 'logins-modal', 'options-modal'];
+            
+            if (modalIds.includes(event.target.id)) {
+                event.target.style.display = 'none';
+            }
+        };
+
         window.switchTab = (t) => { 
             updateSessionTimestamp(); 
             currentTab = t; 
@@ -858,6 +906,24 @@
                 }
             }
 
+            // GENERATE UNIQUE ID
+            const dateStr = document.getElementById('game-date').value.replace(/-/g, '');
+            const numStr = String(gameNum).padStart(2, '0');
+            
+            // Map Acronyms for cleaner IDs
+            const mapAcronyms = {
+                "The First Island": "TFI",
+                "The First Island (5-6)": "TFI56",
+                "Ore For Wool": "OFW",
+                "The Harbormaster": "HBM" 
+            };
+            const mapStr = mapAcronyms[gameMap] || "MAP";
+            
+            // Type Logic: AI or OH (Only Humans)
+            const typeStr = isAIIncluded ? "AI" : "OH";
+            
+            const uniqueGameId = `${dateStr}-${numStr}-${mapStr}-${gameVP}-${typeStr}`;
+
             const editId = document.getElementById('editing-id').value;
             const gameData = { 
                 date: document.getElementById('game-date').value, 
@@ -870,7 +936,8 @@
                 notes: document.getElementById('game-notes').value.trim(), 
                 logged_by: currentUser, 
                 logged_at: new Date().toISOString(),
-                screenshot_url: screenshotUrl // Save the URL (might be empty if cleared)
+                screenshot_url: screenshotUrl, // Save the URL (might be empty if cleared)
+                game_id: uniqueGameId // NEW FIELD
             };
 
             for(let i=1; i<=6; i++) {
