@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.32</title>
+    <title>GaBonzoTan v.1.8.33</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -193,7 +193,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button id="login-btn" onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.32</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.33</div>
     </div>
 
     <div id="app-content">
@@ -205,7 +205,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo" onclick="switchTab('history')" style="cursor:pointer">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.32</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.33</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -405,6 +405,7 @@
             if (data && data.session) {
                 const userEmail = data.session.user.email;
                 currentUser = resolveUserFromEmail(userEmail);
+                updateSessionTimestamp(); // Correctly refresh timestamp on load
                 showApp();
             } else {
                 showLockScreen();
@@ -455,6 +456,7 @@
             } else {
                 // Success
                 currentUser = resolveUserFromEmail(data.session.user.email);
+                updateSessionTimestamp(); // Reset timer to NOW
                 
                 // Track Login
                 try { await supabaseClient.from('logins').insert([{ user_name: currentUser }]); } catch(e) { console.log("Login tracking failed."); }
@@ -471,6 +473,8 @@
 
         window.confirmLogout = async function() {
             await supabaseClient.auth.signOut();
+            localStorage.removeItem('gbt_timestamp'); // CLEAR the timestamp
+            currentUser = null; // Clear user var
             document.getElementById('logout-modal').style.display = 'none';
             showLockScreen();
         };
@@ -618,6 +622,14 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.33</div>
+                            <ul class="changelog-list">
+                                <li>Fixed critical "stale timestamp" bug causing immediate logout loop.</li>
+                                <li>Added explicit timestamp reset on login and session restoration.</li>
+                                <li>Added explicit timestamp clearance on logout.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.32</div>
                             <ul class="changelog-list">
