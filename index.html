@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.31</title>
+    <title>GaBonzoTan v.1.8.32</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -193,7 +193,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button id="login-btn" onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.31</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.32</div>
     </div>
 
     <div id="app-content">
@@ -205,7 +205,7 @@
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo" onclick="switchTab('history')" style="cursor:pointer">
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.31</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.32</div>
         
         <div class="nav-tabs">
             <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -618,6 +618,13 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.32</div>
+                            <ul class="changelog-list">
+                                <li>Allowed <strong>Any User</strong> to edit any improvement note (✎).</li>
+                                <li>Restricted deletion (×) of improvements to the <strong>Original Author</strong> only.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.31</div>
                             <ul class="changelog-list">
@@ -1085,11 +1092,10 @@
                 const safeContent = f.content.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 return `
                 <div class="feedback-card" id="card-${f.id}">
-                    ${isOwner ? `
                     <div class="feedback-actions">
-                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="editFeedback('${f.id}', '${safeContent}')">✎</span>
-                        <span style="cursor:pointer; color:#666; font-size:12px;" onclick="deleteFeedback('${f.id}')">&times;</span>
-                    </div>` : ''}
+                        <span style="cursor:pointer; color:#666; font-size:12px; margin-right:5px;" onclick="editFeedback('${f.id}', '${safeContent}')">✎</span>
+                        ${isOwner ? `<span style="cursor:pointer; color:#666; font-size:12px;" onclick="deleteFeedback('${f.id}')">&times;</span>` : ''}
+                    </div>
                     <div class="feedback-text">${f.content}</div>
                     <div class="feedback-meta">By ${f.author} • ${ds}</div>
                 </div>`;
