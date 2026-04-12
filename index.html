@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.33</title>
+    <title>GaBonzoTan v.1.8.38</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -14,7 +14,7 @@
             --improvement-green: #1abc9c;
             --options-pink: #e056fd;
         }
-        body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        body { background-color: var(--bg-dark); color: #ecf0f1; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
         
         .app-logo { 
             width: 100%; 
@@ -23,7 +23,7 @@
             margin: 0 auto 10px auto; 
             display: block;
         }
-        .logo-container { text-align: center; margin-bottom: 25px; }
+        .logo-container { text-align: center; margin-bottom: 25px; flex-shrink: 0; }
 
         #lock-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
         #lock-screen .warning-msg { font-style: italic; color: #666; font-size: 13px; margin-bottom: 25px; margin-top: -10px; }
@@ -32,7 +32,31 @@
         #lock-screen input { padding: 12px; border-radius: 5px; border: none; text-align: center; background: #1a1a1a; color: white; border: 1px solid #333; font-size: 16px; }
         #lock-screen .version-tag { margin-top: 60px; }
         
-        #app-content { width: 100%; max-width: 500px; padding: 30px 20px; display: none; position: relative; }
+        #app-content { 
+            width: 100%; 
+            max-width: 500px; 
+            padding: 20px 20px 15px 20px; 
+            display: none; 
+            position: relative; 
+            box-sizing: border-box;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header-section { flex-shrink: 0; }
+        #main-view { flex: 1; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+
+        /* CUSTOM SCROLLBARS */
+        #main-view::-webkit-scrollbar { width: 8px; }
+        #main-view::-webkit-scrollbar-track { background: var(--bg-dark); }
+        #main-view::-webkit-scrollbar-thumb { background-color: var(--ai-purple); border-radius: 4px; }
+        #main-view { scrollbar-width: thin; scrollbar-color: var(--ai-purple) var(--bg-dark); }
+
+        .modal-content::-webkit-scrollbar { width: 8px; }
+        .modal-content::-webkit-scrollbar-track { background: #1e1e1e; }
+        .modal-content::-webkit-scrollbar-thumb { background-color: #555; border-radius: 4px; }
+        .modal-content { scrollbar-width: thin; scrollbar-color: #555 #1e1e1e; }
+
         .version-tag { text-align: center; font-size: 10px; color: #555; margin-bottom: 25px; letter-spacing: 1px; margin-top: -15px; }
         
         .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -49,14 +73,13 @@
         .winner-chip { border-color: var(--accent-gold); color: var(--accent-gold); font-weight: bold; }
         
         .map-info-label { font-size: 11px; color: var(--insight-blue); font-weight: bold; text-transform: uppercase; margin-top: 5px; display: block; border-left: 2px solid var(--insight-blue); padding-left: 6px; }
+        .platform-tag { color: var(--text-dim); font-weight: normal; margin-left: 5px; font-size: 10px; }
         
         .game-notes { font-size: 11px; color: #888; margin-top: 10px; font-style: italic; border-top: 1px solid #2a2a2a; padding-top: 8px; }
         .logged-meta { font-size: 9px; color: #888; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .game-id-display { font-size: 8px; color: var(--about-green); font-family: monospace; margin-top: 5px; letter-spacing: 0.5px; }
 
-        .h2h-tracker { text-align: center; font-style: italic; color: var(--ai-purple); font-size: 14px; margin: 10px 0; padding: 5px; }
-
-        .app-footer { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px; padding-top: 15px; border-top: 1px solid #222; gap: 10px; }
+        .app-footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-start; margin-top: 15px; padding-top: 15px; border-top: 1px solid #222; gap: 10px; }
         .footer-btns { display: flex; flex-direction: row; gap: 6px; flex-wrap: wrap; flex: 1; }
         .footer-btns button { 
             padding: 4px 2px; 
@@ -97,7 +120,11 @@
         #easter-egg-overlay, #screenshot-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 10000; cursor: pointer; }
         #easter-egg-overlay img, #screenshot-overlay img { max-width: 90%; max-height: 80%; border: 2px solid var(--accent-gold); box-shadow: 0 0 20px var(--accent-gold); border-radius: 10px; }
 
-        .changelog-container { max-height: 480px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; scrollbar-width: thin; scrollbar-color: var(--ai-purple) #111; }
+        .changelog-container { max-height: 480px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; scrollbar-width: thin; scrollbar-color: var(--ai-purple) var(--bg-dark); }
+        .changelog-container::-webkit-scrollbar { width: 8px; }
+        .changelog-container::-webkit-scrollbar-track { background: var(--bg-dark); }
+        .changelog-container::-webkit-scrollbar-thumb { background-color: var(--ai-purple); border-radius: 4px; }
+        
         .changelog-entry { margin-bottom: 25px; padding-left: 10px; border-left: 2px solid #333; }
         .changelog-ver { color: var(--accent-gold); font-weight: bold; font-size: 14px; margin-bottom: 5px; }
         .changelog-list { list-style: none; padding: 0; margin: 0; font-size: 12px; color: var(--text-dim); }
@@ -193,27 +220,30 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button id="login-btn" onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.33</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.38</div>
     </div>
 
     <div id="app-content">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div id="active-user-tag" onclick="triggerEasterEgg()" style="font-size: 10px; color: var(--accent-gold); font-weight: bold; text-transform: uppercase; cursor: pointer; user-select: none; padding: 5px;"></div>
-            <button onclick="logout()" style="background:none; border:none; color:var(--red); font-size:10px; cursor:pointer">LOGOUT</button>
-        </div>
-        
-        <div class="logo-container">
-            <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo" onclick="switchTab('history')" style="cursor:pointer">
-        </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.33</div>
-        
-        <div class="nav-tabs">
-            <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
-            <button id="t-insights" class="tab-btn" onclick="switchTab('insights')">Player Stats</button>
-            <button id="t-ai" class="tab-btn" onclick="switchTab('ai')">AI Stats</button>
+        <div class="header-section">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div id="active-user-tag" onclick="triggerEasterEgg()" style="font-size: 10px; color: var(--accent-gold); font-weight: bold; text-transform: uppercase; cursor: pointer; user-select: none; padding: 5px;"></div>
+                <button onclick="logout()" style="background:none; border:none; color:var(--red); font-size:10px; cursor:pointer">LOGOUT</button>
+            </div>
+            
+            <div class="logo-container">
+                <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo" onclick="switchTab('history')" style="cursor:pointer">
+            </div>
+            <div class="version-tag">STABLE RELEASE v.1.8.38</div>
+            
+            <div class="nav-tabs">
+                <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
+                <button id="t-insights" class="tab-btn" onclick="switchTab('insights')">Player Stats</button>
+                <button id="t-ai" class="tab-btn" onclick="switchTab('ai')">AI Stats</button>
+            </div>
+
+            <div id="action-area"><button class="add-game-btn" onclick="openModal()">+ ADD NEW GAME</button></div>
         </div>
 
-        <div id="action-area"><button class="add-game-btn" onclick="openModal()">+ ADD NEW GAME</button></div>
         <div id="main-view">Connecting...</div>
 
         <div class="app-footer">
@@ -248,7 +278,7 @@
             <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:10px; margin-bottom:15px">
                 <div>
                     <label style="font-size:9px; color:#666">DATE<span class="required-star">*</span></label>
-                    <input type="date" id="game-date">
+                    <input type="date" id="game-date" onchange="autoSetGameNumber()">
                 </div>
                 <div>
                     <label style="font-size:9px; color:#666">VP<span class="required-star">*</span></label>
@@ -259,15 +289,21 @@
                     <input type="number" id="game-number" value="1" min="1">
                 </div>
             </div>
-            <div style="margin-bottom: 15px;">
-                <label style="font-size:10px; color:#666; display:block; margin-bottom:4px">SELECT MAP<span class="required-star">*</span></label>
-                <select id="game-map">
-                    <option value="">(No Map Selected)</option>
-                    <option value="The First Island">The First Island</option>
-                    <option value="The First Island (5-6)">The First Island (5-6)</option>
-                    <option value="Ore For Wool">Ore For Wool</option>
-                    <option value="The Harbormaster">The Harbormaster</option>
-                </select>
+            <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                <div style="flex:1;">
+                    <label style="font-size:10px; color:#666; display:block; margin-bottom:4px">PLATFORM<span class="required-star">*</span></label>
+                    <select id="game-platform">
+                        <option value="Colonist">Colonist</option>
+                        <option value="Catan Universe">Catan Universe</option>
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:10px; color:#666; display:block; margin-bottom:4px">SELECT MAP<span class="required-star">*</span></label>
+                    <select id="game-map" onchange="toggleCustomMap()">
+                        <option value="">(No Map Selected)</option>
+                        </select>
+                    <input type="text" id="custom-map-input" placeholder="Type new map name..." style="display:none; margin-top:5px;">
+                </div>
             </div>
             
             <div id="player-rows-header" style="display: grid; grid-template-columns: 100px 1fr 60px; gap: 10px; margin-bottom: 5px; align-items: center;">
@@ -405,7 +441,14 @@
             if (data && data.session) {
                 const userEmail = data.session.user.email;
                 currentUser = resolveUserFromEmail(userEmail);
-                updateSessionTimestamp(); // Correctly refresh timestamp on load
+                updateSessionTimestamp(); 
+                
+                // NEW: Track Auto-Login (once per tab session to avoid F5 spam)
+                if (!sessionStorage.getItem('gbt_has_logged_this_session')) {
+                    try { await supabaseClient.from('logins').insert([{ user_name: currentUser }]); } catch(e) { console.log("Login tracking failed."); }
+                    sessionStorage.setItem('gbt_has_logged_this_session', 'true');
+                }
+
                 showApp();
             } else {
                 showLockScreen();
@@ -417,12 +460,12 @@
             const lower = email.toLowerCase();
             if (lower.includes('nico')) return 'Nico';
             if (lower.includes('gabo')) return 'Gabo';
-            return email.split('@')[0]; // Fallback
+            return email.split('@')[0]; 
         }
 
         function showApp() {
             document.getElementById('lock-screen').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('app-content').style.display = 'flex'; // Changed to flex for sticky layout
             document.getElementById('active-user-tag').innerText = "User: " + currentUser;
             fetchGames();
         }
@@ -454,11 +497,10 @@
                 btn.innerText = "ENTER";
                 btn.disabled = false;
             } else {
-                // Success
                 currentUser = resolveUserFromEmail(data.session.user.email);
-                updateSessionTimestamp(); // Reset timer to NOW
+                updateSessionTimestamp(); 
                 
-                // Track Login
+                sessionStorage.setItem('gbt_has_logged_this_session', 'true');
                 try { await supabaseClient.from('logins').insert([{ user_name: currentUser }]); } catch(e) { console.log("Login tracking failed."); }
                 
                 showApp();
@@ -473,8 +515,9 @@
 
         window.confirmLogout = async function() {
             await supabaseClient.auth.signOut();
-            localStorage.removeItem('gbt_timestamp'); // CLEAR the timestamp
-            currentUser = null; // Clear user var
+            localStorage.removeItem('gbt_timestamp'); 
+            sessionStorage.removeItem('gbt_has_logged_this_session'); // Clear session log state
+            currentUser = null; 
             document.getElementById('logout-modal').style.display = 'none';
             showLockScreen();
         };
@@ -494,8 +537,36 @@
                 .select('*')
                 .order('date', { ascending: false })
                 .order('game_number', { ascending: false }); 
-            if (!error) { games = data || []; render(); }
+            if (!error) { 
+                games = data || []; 
+                updateMapDropdown(); // Populate Maps dynamically
+                render(); 
+            }
         }
+
+        function updateMapDropdown() {
+            const select = document.getElementById('game-map');
+            const defaultMaps = ["The First Island", "The First Island (5-6)", "Ore For Wool", "The Harbormaster"];
+            const usedMaps = [...new Set(games.map(g => g.map_used).filter(m => m))];
+            const allMaps = [...new Set([...defaultMaps, ...usedMaps])].sort();
+
+            select.innerHTML = '<option value="">(No Map Selected)</option>';
+            allMaps.forEach(m => {
+                select.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+            select.innerHTML += '<option value="Custom">Custom...</option>';
+        }
+
+        window.toggleCustomMap = function() {
+            const sel = document.getElementById('game-map').value;
+            const input = document.getElementById('custom-map-input');
+            if (sel === 'Custom') {
+                input.style.display = 'block';
+                input.focus();
+            } else {
+                input.style.display = 'none';
+            }
+        };
 
         function render() {
             const view = document.getElementById('main-view');
@@ -505,18 +576,27 @@
 
             if(currentTab === 'history') {
                 if(games.length === 0) { view.innerHTML = '<p style="text-align:center; color:#555">Empty.</p>'; return; }
-                let nWins = 0, gWins = 0;
 
                 games.forEach(g => {
-                    if(g.winner === 'Nico') nWins++;
-                    if(g.winner === 'Gabo') gWins++;
                     const div = document.createElement('div');
                     div.className = `history-item ${g.winner === 'AI' ? 'ai-win-card' : ''}`;
                     const displayDate = formatDate(g.date);
                     const gameNumSuffix = ` #${g.game_number || 1}`;
+                    
+                    // Original Logged Data
                     const logDateRaw = g.logged_at ? new Date(g.logged_at) : null;
                     const logDateStr = logDateRaw ? `${String(logDateRaw.getDate()).padStart(2,'0')}-${String(logDateRaw.getMonth()+1).padStart(2,'0')}-${logDateRaw.getFullYear()}` : 'Legacy';
                     const loggedBy = g.logged_by || 'System';
+                    
+                    // Modified Meta Data
+                    let modifiedHtml = '';
+                    if (g.modified_by) {
+                        const modDateRaw = g.modified_at ? new Date(g.modified_at) : null;
+                        const modDateStr = modDateRaw ? `${String(modDateRaw.getDate()).padStart(2,'0')}-${String(modDateRaw.getMonth()+1).padStart(2,'0')}-${modDateRaw.getFullYear()}` : 'Unknown';
+                        modifiedHtml = `<div class="logged-meta">Modified by ${g.modified_by} on ${modDateStr}</div>`;
+                    }
+
+                    const platformStr = g.platform ? `<span class="platform-tag">(${g.platform})</span>` : '';
 
                     div.innerHTML = `
                         <div class="actions">
@@ -524,22 +604,16 @@
                             <button class="action-btn del-btn" onclick="removeGame(${g.id})">&times;</button>
                         </div>
                         <div style="font-size:12px; color:var(--text-dim); margin-bottom:4px">${displayDate}${gameNumSuffix} • ${g.winningvp} VP</div>
-                        ${g.map_used ? `<span class="map-info-label">${g.map_used}</span>` : ''}
+                        ${g.map_used ? `<span class="map-info-label">${g.map_used} ${platformStr}</span>` : ''}
                         <div>${g.players.map(p => `<span class="chip ${p===g.winner?'winner-chip':''}">${p}</span>`).join('')}</div>
                         ${g.screenshot_url ? `<img src="${g.screenshot_url}" class="screenshot-card-thumb" onclick="viewScreenshot('${g.screenshot_url}')" title="View Full Screenshot">` : ''}
                         ${g.notes ? `<div class="game-notes">${g.notes}</div>` : ''}
                         <div class="logged-meta">Logged by ${loggedBy} on ${logDateStr}</div>
+                        ${modifiedHtml}
                         <div class="game-id-display">ID: ${g.game_id || 'Generating...'}</div>`;
                     view.appendChild(div);
                 });
                 
-                if (nWins !== gWins) {
-                    const h2h = document.createElement('div');
-                    h2h.className = 'h2h-tracker';
-                    if(nWins > gWins) h2h.innerText = 'Nico is currently leading Gabo';
-                    else if(gWins > nWins) h2h.innerText = 'Gabo is currently leading Nico';
-                    view.appendChild(h2h);
-                }
             } else if (currentTab === 'insights') {
                 const allPlayers = [...new Set(games.flatMap(g => g.players))].filter(p => p !== 'AI').sort();
                 
@@ -561,6 +635,53 @@
                 });
                 gridHTML += '</div>';
                 // --- PLAYER GRID END ---
+
+                // --- STREAK CALCULATION START ---
+                if (games.length > 0) {
+                    const sortedGames = [...games].sort((a, b) => {
+                        const dateA = new Date(a.date);
+                        const dateB = new Date(b.date);
+                        if(dateA < dateB) return -1;
+                        if(dateA > dateB) return 1;
+                        return (a.game_number || 1) - (b.game_number || 1);
+                    });
+
+                    let streaks = [];
+                    let currentStreak = null;
+
+                    sortedGames.forEach(g => {
+                        if (!currentStreak) {
+                            currentStreak = { player: g.winner, count: 1, start: g.date, end: g.date };
+                        } else if (currentStreak.player === g.winner) {
+                            currentStreak.count++;
+                            currentStreak.end = g.date;
+                        } else {
+                            streaks.push(currentStreak);
+                            currentStreak = { player: g.winner, count: 1, start: g.date, end: g.date };
+                        }
+                    });
+                    if (currentStreak) streaks.push(currentStreak);
+
+                    const maxStreakCount = Math.max(...streaks.map(s => s.count), 0);
+                    const recordStreaks = streaks.filter(s => s.count === maxStreakCount && s.count > 1);
+
+                    if (recordStreaks.length > 0) {
+                        gridHTML += `<div style="background:var(--card-dark); border: 2px solid var(--accent-gold); border-radius:8px; padding:15px; margin-top:20px; text-align:center;">
+                            <h3 style="color:var(--accent-gold); margin-top:0; margin-bottom:15px; font-size:14px; text-transform:uppercase; letter-spacing:1px;">🔥 Longest Winning Streak 🔥</h3>`;
+                        
+                        gridHTML += recordStreaks.map(s => {
+                            let pColor = s.player === 'Nico' ? 'var(--insight-blue)' : (s.player === 'Gabo' ? 'var(--red)' : 'var(--ai-purple)');
+                            return `<div style="margin-bottom:10px;">
+                                <span style="font-weight:bold; color:${pColor}; font-size:18px; text-transform:uppercase;">${s.player}</span>
+                                <div style="font-size:18px; font-weight:bold; color:#fff; margin:4px 0;">${s.count} Games in a row</div>
+                                <div style="font-size:11px; color:#aaa; font-style:italic;">${formatDate(s.start)} to ${formatDate(s.end)}</div>
+                            </div>`;
+                        }).join('<hr style="border:0; border-top:1px solid #333; margin:15px 40px;">');
+                        
+                        gridHTML += `</div>`;
+                    }
+                }
+                // --- STREAK CALCULATION END ---
 
                 // --- MAP META ANALYSIS START ---
                 gridHTML += '<h3 style="color:var(--text-dim); margin-top:30px; margin-bottom:10px; text-align:center; text-transform:uppercase; letter-spacing:1px; font-size:12px;">Map Meta Analysis</h3><div style="display:grid; gap:10px;">';
@@ -622,6 +743,47 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.38</div>
+                            <ul class="changelog-list">
+                                <li>Customized the scrollbar design in the main view and all modals to match the app's purple and dark-gray theme, removing native white scrollbars.</li>
+                                <li>Implemented Auto-Login Tracking: Added database tracking for users who bypass the lock screen via active sessions. Bound tracking to browser sessionStorage to prevent spamming the database on rapid page refreshes.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.37</div>
+                            <ul class="changelog-list">
+                                <li>Automated Game Number calculation: When adding a new game, the "Game #" field now automatically checks the selected date and defaults to the next sequential game number.</li>
+                                <li>The Game # calculation dynamically updates if the user manually changes the date during creation.</li>
+                                <li>Added safety constraints to prevent auto-calculation from overriding the game number while explicitly editing past games.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.36</div>
+                            <ul class="changelog-list">
+                                <li>Added Longest Winning Streak tracker to the Player Stats tab.</li>
+                                <li>Implemented chronological database mapping to calculate streaks dynamically.</li>
+                                <li>Added support for tied streaks (displaying records for multiple users simultaneously).</li>
+                                <li>Removed redundant Head-to-Head tracker from the main Game History page.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.35</div>
+                            <ul class="changelog-list">
+                                <li>Fixed tracking bug where modifying a game overwrote the original "Logged By" data. Original authorship is now locked.</li>
+                                <li>Added "Modified By" metadata tracking, which appears only if a game has been edited.</li>
+                                <li>Executed clean slate database patch to re-align all past game dates and attributions.</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.34</div>
+                            <ul class="changelog-list">
+                                <li>Added Platform Tracking: Users can now choose between Colonist and Catan Universe when saving a game.</li>
+                                <li>Implemented Duplicate Game Protection: Prevents submitting a game if the Date and Game Number combination already exist.</li>
+                                <li>Added Custom Map Input: If a map is not in the list, choosing "Custom..." allows for manual entry which automatically saves to the global dropdown for future use.</li>
+                                <li>Sticky Layout Update: Converted the main interface so headers and footers remain fixed on screen, allowing only the content area to scroll.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.33</div>
                             <ul class="changelog-list">
@@ -908,7 +1070,6 @@
 
         // GLOBAL CLICK OUTSIDE TO CLOSE
         window.onclick = function(event) {
-            // IDs of all modals that should close when background is clicked
             const modalIds = ['modal', 'improvement-modal', 'logins-modal', 'options-modal', 'logout-modal'];
             
             if (modalIds.includes(event.target.id)) {
@@ -925,21 +1086,41 @@
             render(); 
         };
 
+        window.autoSetGameNumber = function() {
+            // Only auto-set if we are NOT editing an existing game
+            if (document.getElementById('editing-id').value !== "") return;
+            
+            const dateStr = document.getElementById('game-date').value;
+            if(!dateStr) return;
+            
+            const gamesOnDate = games.filter(g => g.date === dateStr);
+            let maxNum = 0;
+            gamesOnDate.forEach(g => {
+                if (g.game_number > maxNum) maxNum = g.game_number;
+            });
+            document.getElementById('game-number').value = maxNum + 1;
+        };
+
         window.openModal = function(isEdit = false) {
             updateSessionTimestamp();
             document.getElementById('modal').style.display = 'flex';
-            document.getElementById('screenshot-preview-wrapper').style.display = 'none'; // Reset status
+            document.getElementById('screenshot-preview-wrapper').style.display = 'none'; 
             
             if(!isEdit) {
                 document.getElementById('editing-id').value = "";
                 document.getElementById('existing-screenshot-url').value = "";
                 document.getElementById('game-date').valueAsDate = new Date();
+                
+                autoSetGameNumber();
+                
                 document.getElementById('winning-vp').value = 10;
-                document.getElementById('game-number').value = 1;
                 document.getElementById('game-map').value = "";
+                document.getElementById('game-platform').value = "Colonist";
+                document.getElementById('custom-map-input').style.display = "none";
+                document.getElementById('custom-map-input').value = "";
                 document.getElementById('ai-toggle').checked = false;
                 document.getElementById('game-notes').value = "";
-                document.getElementById('game-screenshot').value = ""; // Clear file
+                document.getElementById('game-screenshot').value = ""; 
                 toggleAIRow();
             }
             const rows = document.getElementById('player-rows');
@@ -967,13 +1148,37 @@
             document.getElementById('game-date').value = game.date;
             document.getElementById('winning-vp').value = game.winningvp;
             document.getElementById('game-number').value = game.game_number || 1;
-            document.getElementById('game-map').value = game.map_used || "";
+            document.getElementById('game-platform').value = game.platform || "Colonist";
+            
+            const mapSelect = document.getElementById('game-map');
+            const customInput = document.getElementById('custom-map-input');
+            
+            // Check if map exists in dropdown
+            let mapFound = false;
+            for (let i = 0; i < mapSelect.options.length; i++) {
+                if (mapSelect.options[i].value === game.map_used) {
+                    mapFound = true; break;
+                }
+            }
+            
+            if (mapFound) {
+                mapSelect.value = game.map_used || "";
+                customInput.style.display = "none";
+                customInput.value = "";
+            } else if (game.map_used) {
+                mapSelect.value = "Custom";
+                customInput.style.display = "block";
+                customInput.value = game.map_used;
+            } else {
+                mapSelect.value = "";
+                customInput.style.display = "none";
+            }
+
             document.getElementById('ai-toggle').checked = game.aiplayed;
             document.getElementById('game-notes').value = game.notes || "";
             document.getElementById('existing-screenshot-url').value = game.screenshot_url || "";
-            document.getElementById('game-screenshot').value = ""; // Clear file input
+            document.getElementById('game-screenshot').value = ""; 
             
-            // Show PREVIEW if image exists
             if (game.screenshot_url) {
                 document.getElementById('screenshot-preview-wrapper').style.display = 'flex';
                 document.getElementById('screenshot-thumb').src = game.screenshot_url;
@@ -995,19 +1200,36 @@
         window.saveGame = async function() {
             updateSessionTimestamp();
             const saveBtn = document.getElementById('save-game-btn');
-            saveBtn.disabled = true;
-            saveBtn.innerText = "Saving...";
-
-            const gameMap = document.getElementById('game-map').value;
+            const editId = document.getElementById('editing-id').value;
+            
+            let gameMap = document.getElementById('game-map').value;
+            if (gameMap === 'Custom') {
+                gameMap = document.getElementById('custom-map-input').value.trim();
+            }
+            
             const gameVP = parseInt(document.getElementById('winning-vp').value);
-            const gameNum = document.getElementById('game-number').value;
+            const gameNum = parseInt(document.getElementById('game-number').value);
+            const gameDate = document.getElementById('game-date').value;
+            const gamePlatform = document.getElementById('game-platform').value;
             const winnerRadio = document.querySelector('input[name="winner"]:checked');
             const isAIIncluded = document.getElementById('ai-toggle').checked;
             
-            if(!gameMap) { alert("Please select a Map."); saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; return; }
-            if(!gameVP || gameVP <= 0) { alert("Winning VP must be greater than 0."); saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; return; }
-            if(!gameNum) { alert("Please enter a Game Number."); saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; return; }
-            
+            // Validation
+            if(!gameMap) { alert("Please select or enter a Map."); return; }
+            if(!gameVP || gameVP <= 0) { alert("Winning VP must be greater than 0."); return; }
+            if(!gameNum) { alert("Please enter a Game Number."); return; }
+            if(!gameDate) { alert("Please select a date."); return; }
+
+            // DUPLICATE DATE + GAME NUMBER CHECK
+            const isDuplicate = games.some(g => g.date === gameDate && g.game_number === gameNum && String(g.id) !== editId);
+            if (isDuplicate) {
+                alert(`Game #${gameNum} on date ${formatDate(gameDate)} already exists! Please change the Game Number or Date.`);
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving...";
+
             // SCREENSHOT UPLOAD LOGIC
             let screenshotUrl = document.getElementById('existing-screenshot-url').value;
             const fileInput = document.getElementById('game-screenshot');
@@ -1030,10 +1252,9 @@
             }
 
             // GENERATE UNIQUE ID
-            const dateStr = document.getElementById('game-date').value.replace(/-/g, '');
+            const dateStr = gameDate.replace(/-/g, '');
             const numStr = String(gameNum).padStart(2, '0');
             
-            // Map Acronyms for cleaner IDs
             const mapAcronyms = {
                 "The First Island": "TFI",
                 "The First Island (5-6)": "TFI56",
@@ -1041,41 +1262,49 @@
                 "The Harbormaster": "HBM" 
             };
             const mapStr = mapAcronyms[gameMap] || "MAP";
-            
-            // Type Logic: AI or OH (Only Humans)
             const typeStr = isAIIncluded ? "AI" : "OH";
             
             const uniqueGameId = `${dateStr}-${numStr}-${mapStr}-${gameVP}-${typeStr}`;
 
-            const editId = document.getElementById('editing-id').value;
-            const gameData = { 
-                date: document.getElementById('game-date').value, 
+            const baseGameData = { 
+                date: gameDate, 
                 winningvp: gameVP, 
-                game_number: parseInt(gameNum) || 1, 
+                game_number: gameNum, 
                 map_used: gameMap, 
+                platform: gamePlatform,
                 aiplayed: isAIIncluded, 
                 players: [], 
                 winner: "", 
                 notes: document.getElementById('game-notes').value.trim(), 
-                logged_by: currentUser, 
-                logged_at: new Date().toISOString(),
-                screenshot_url: screenshotUrl, // Save the URL (might be empty if cleared)
-                game_id: uniqueGameId // NEW FIELD
+                screenshot_url: screenshotUrl, 
+                game_id: uniqueGameId 
             };
 
             for(let i=1; i<=6; i++) {
                 const sel = document.getElementById(`p${i}-sel`).value;
                 const finalName = sel === 'Guest' ? document.getElementById(`p${i}-name`).value.trim() : sel;
-                if(finalName) { gameData.players.push(finalName); if(winnerRadio && winnerRadio.value == i) gameData.winner = finalName; }
+                if(finalName) { baseGameData.players.push(finalName); if(winnerRadio && winnerRadio.value == i) baseGameData.winner = finalName; }
             }
-            if(isAIIncluded) { gameData.players.push("AI"); if(winnerRadio && winnerRadio.value === "AI") gameData.winner = "AI"; }
+            if(isAIIncluded) { baseGameData.players.push("AI"); if(winnerRadio && winnerRadio.value === "AI") baseGameData.winner = "AI"; }
             
-            if(gameData.players.length < 2) { alert("At least two players are required (AI counts)."); saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; return; }
-            if(!gameData.winner) { alert("Please select which player won the game."); saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; return; }
+            if(baseGameData.players.length < 2) { alert("At least two players are required (AI counts)."); saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; return; }
+            if(!baseGameData.winner) { alert("Please select which player won the game."); saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; return; }
             
             try {
-                if(editId) { await supabaseClient.from('games').update(gameData).eq('id', editId); } 
-                else { await supabaseClient.from('games').insert([gameData]); }
+                if(editId) { 
+                    // Update only modified fields
+                    baseGameData.modified_by = currentUser;
+                    baseGameData.modified_at = new Date().toISOString();
+                    await supabaseClient.from('games').update(baseGameData).eq('id', editId); 
+                } 
+                else { 
+                    // Original log fields
+                    baseGameData.logged_by = currentUser;
+                    baseGameData.logged_at = new Date().toISOString();
+                    baseGameData.modified_by = null;
+                    baseGameData.modified_at = null;
+                    await supabaseClient.from('games').insert([baseGameData]); 
+                }
                 closeModal(); fetchGames();
             } catch (err) { alert("DATABASE ERROR: " + err.message); } finally { saveBtn.disabled = false; saveBtn.innerText = "Save Changes"; }
         };
