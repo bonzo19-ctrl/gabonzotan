@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>GaBonzoTan v.1.8.38</title>
+    <title>GaBonzoTan v.1.8.39</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -220,7 +220,7 @@
             <input type="password" id="pass-input" placeholder="Password" onkeydown="if(event.key==='Enter') checkPass()">
             <button id="login-btn" onclick="checkPass()" style="padding:10px 20px; background:var(--accent-gold); border:none; border-radius:4px; font-weight:bold; cursor:pointer">ENTER</button>
         </div>
-        <div class="version-tag">STABLE RELEASE v.1.8.38</div>
+        <div class="version-tag">STABLE RELEASE v.1.8.39</div>
     </div>
 
     <div id="app-content">
@@ -233,7 +233,7 @@
             <div class="logo-container">
                 <img src="https://raw.githubusercontent.com/bonzo19-ctrl/gabonzotan/refs/heads/main/gabonzotan2.png" alt="GaBonzoTan Logo" class="app-logo" onclick="switchTab('history')" style="cursor:pointer">
             </div>
-            <div class="version-tag">STABLE RELEASE v.1.8.38</div>
+            <div class="version-tag">STABLE RELEASE v.1.8.39</div>
             
             <div class="nav-tabs">
                 <button id="t-history" class="tab-btn active" onclick="switchTab('history')">Game History</button>
@@ -683,6 +683,37 @@
                 }
                 // --- STREAK CALCULATION END ---
 
+                // --- RECENT 5 GAMES START ---
+                if (games.length > 0) {
+                    const recentGames = games.slice(0, 5);
+                    gridHTML += `<h3 style="color:var(--text-dim); margin-top:30px; margin-bottom:10px; text-align:center; text-transform:uppercase; letter-spacing:1px; font-size:12px;">Last 5 Games</h3>`;
+                    gridHTML += `<div style="display:flex; flex-direction:column; gap:10px;">`;
+                    
+                    recentGames.forEach(g => {
+                        let wColor = 'var(--accent-gold)';
+                        if(g.winner === 'Nico') wColor = 'var(--insight-blue)';
+                        if(g.winner === 'Gabo') wColor = 'var(--red)';
+                        if(g.winner === 'AI') wColor = 'var(--ai-purple)';
+
+                        const displayDate = formatDate(g.date);
+                        const vsPlayers = g.players.filter(p => p !== g.winner).join(', ');
+
+                        gridHTML += `<div style="background:var(--card-dark); padding:12px; border-radius:8px; border-left:3px solid ${wColor}; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div style="font-weight:bold; color:${wColor}; font-size:14px; text-transform:uppercase;">${g.winner} 👑</div>
+                                <div style="font-size:10px; color:#888; margin-top:3px;">vs ${vsPlayers}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-weight:bold; color:#fff; font-size:14px;">${g.winningvp} VP</div>
+                                <div style="font-size:9px; color:#666; margin-top:3px;">${displayDate}</div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    gridHTML += `</div>`;
+                }
+                // --- RECENT 5 GAMES END ---
+
                 // --- MAP META ANALYSIS START ---
                 gridHTML += '<h3 style="color:var(--text-dim); margin-top:30px; margin-bottom:10px; text-align:center; text-transform:uppercase; letter-spacing:1px; font-size:12px;">Map Meta Analysis</h3><div style="display:grid; gap:10px;">';
                 
@@ -743,6 +774,12 @@
                 view.innerHTML = `
                     <h2 style="color:var(--ai-purple); margin-top:0">Changeloggo</h2>
                     <div class="changelog-container">
+                        <div class="changelog-entry">
+                            <div class="changelog-ver">v.1.8.39</div>
+                            <ul class="changelog-list">
+                                <li>Added "Last 5 Games" section to the Player Stats tab, displaying the recent winners, their winning VP, and their opponents.</li>
+                            </ul>
+                        </div>
                         <div class="changelog-entry">
                             <div class="changelog-ver">v.1.8.38</div>
                             <ul class="changelog-list">
